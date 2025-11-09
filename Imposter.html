@@ -253,7 +253,7 @@
       const secretWords = ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","castle","mountain","computer","ocean","penguin","forest","diamond"];
       const seededRandom = s => (Math.sin(s++) * 10000) % 1;
       const wordIndex = Math.floor(Math.abs(seededRandom(seed)) * secretWords.length);
-      const imposterIndex = Math.floor(Math.abs(seededRandom(seed * 7)) * 7);
+      let imposterIndex = 0; // will be decided after players join
       const chosenWord = secretWords[wordIndex];
 
       const playersRef = db.ref("games/" + seed + "/players");
@@ -315,6 +315,9 @@
       playersRef.on("value", snap => {
         const players = snap.val() || {};
         const playerCount = Object.keys(players).length;
+        if (playerCount > 0) {
+        imposterIndex = Math.floor(Math.abs(seededRandom(seed * 7)) * playerCount);
+      }
 
         playersListDiv.style.display = "block";
         playersUl.innerHTML = "";
