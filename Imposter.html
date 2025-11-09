@@ -1,178 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Imposter Game (Live)</title>
-<style>
-  body {
-    font-family: "Poppins", sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 100vh;
-    background: #0d1117;
-    color: white;
-    text-align: center;
-    padding-top: 40px;
-  }
-  h1 { margin-bottom: 10px; }
-  .number-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 15px;
-    margin-top: 30px;
-  }
-  .number-buttons button {
-    width: 60px;
-    height: 60px;
-    font-size: 20px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    background-color: #161b22;
-    color: white;
-    transition: all 0.2s;
-  }
-  .number-buttons button.available:hover {
-    background-color: #00c896;
-  }
-  .number-buttons button.taken {
-    background-color: #555;
-    color: #ccc;
-    cursor: not-allowed;
-  }
-  .word-box {
-    font-size: 28px;
-    margin-top: 40px;
-    background: #161b22;
-    padding: 20px 40px;
-    border-radius: 10px;
-    display: none;
-  }
-  #newRoundBtn {
-    margin-top: 40px;
-    background: #00aaff;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 20px;
-    font-size: 18px;
-    cursor: pointer;
-  }
-  #newRoundBtn:hover {
-    background: #0095e0;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Imposter Game</title>
+  <style>
+    #numberButtons button.available { background-color: #8BC34A; color: white; margin: 5px; padding: 10px; }
+    #numberButtons button.taken { background-color: #B0BEC5; color: white; margin: 5px; padding: 10px; }
+    #wordBox { display: none; margin-top: 20px; font-size: 1.5em; }
+  </style>
 </head>
 <body>
-<h1>🔍 The Imposter Game (Live)</h1>
-<p>There are 7 players. One of you is the imposter!</p>
-<p>Select your player number:</p>
+  <h1>Imposter Game</h1>
+  <div id="numberButtons"></div>
+  <div id="wordBox"></div>
+  <button id="newRoundBtn">Start New Round</button>
 
-<div class="number-buttons" id="numberButtons"></div>
-<div class="word-box" id="wordBox"></div>
-<button id="newRoundBtn">🔄 Start New Round</button>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script><!--this one was added after introducing anonymous auth-->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-<script>
-  // 🔧 INSERT YOUR FIREBASE CONFIG HERE
+  <script>
+  // ---------------- Firebase config ----------------
   const firebaseConfig = {
-  apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
-  authDomain: "imposter-game-515d8.firebaseapp.com",
-  projectId: "imposter-game-515d8",
-  storageBucket: "imposter-game-515d8.firebasestorage.app",
-  messagingSenderId: "727642877069",
-  appId: "1:727642877069:web:35f0113718fdde270b06c4"
+    apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
+    authDomain: "imposter-game-515d8.firebaseapp.com",
+    databaseURL: "https://imposter-game-515d8-default-rtdb.firebaseio.com",
+    projectId: "imposter-game-515d8",
+    storageBucket: "imposter-game-515d8.firebasestorage.app",
+    messagingSenderId: "727642877069",
+    appId: "1:727642877069:web:35f0113718fdde270b06c4"
   };
 
   firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+  const db = firebase.database();
 
-// 🔒 Sign in anonymously so Firebase rules with "auth != null" still allow writes
-firebase.auth().signInAnonymously()
-  .then(() => {
-    console.log("✅ Signed in anonymously — ready to play!");
-    startGame(); // we'll move your game logic into this function below
-  })
-  .catch(error => {
-    console.error("❌ Authentication error:", error.code, error.message);
-    alert("Could not connect to Firebase. Please refresh or try again later.");
-  });
-
-function startGame() {
-  // 🎯 Step 1: Setup seed + generate shared data
-  const secretWords = ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","pyramid","penguin","castle","carrot","mountain","computer","ocean"];
-  const params = new URLSearchParams(window.location.search);
-  let seed = params.get("seed");
-  
-  if(!seed){
-    seed = Math.floor(Math.random()*1000000);
-    window.location.search = "?seed=" + seed;
-  }
-
-  function seededRandom(seed){ const x = Math.sin(seed++)*10000; return x - Math.floor(x); }
-  const wordIndex = Math.floor(seededRandom(seed) * secretWords.length);
-  const imposterIndex = Math.floor(seededRandom(seed * 7) * 7);
-  const chosenWord = secretWords[wordIndex];
-
-  // Firebase path is now unique per seed (each round = new room)
-  const gameRef = db.ref("games/" + seed + "/players");
-  const numberButtonsDiv = document.getElementById("numberButtons");
-
-  // 🎮 Step 2: Create player buttons
-  for(let i=0;i<7;i++){
-    const btn = document.createElement("button");
-    btn.textContent = i + 1;
-    btn.classList.add("available");
-    btn.disabled = false;
-    btn.addEventListener("click", ()=>{
-      gameRef.child(i).set(true);
-      displayWord(i, btn);
+  // --------------- Health Check & Start Game ---------------
+  firebase.auth().signInAnonymously()
+    .then(() => {
+      console.log("✅ Anonymous sign-in successful");
+      // quick write/read test
+      const testRef = db.ref("healthCheck/test");
+      testRef.set({ timestamp: Date.now() })
+        .then(() => testRef.once("value"))
+        .then(snapshot => {
+          console.log("✅ Database test passed, starting game!");
+          startGame();
+        })
+        .catch(err => {
+          console.error("❌ Database test failed:", err);
+          alert("Database access failed. Check Firebase rules.");
+        });
+    })
+    .catch(err => {
+      console.error("❌ Auth failed:", err);
+      alert("Firebase sign-in failed. Check console.");
     });
-    numberButtonsDiv.appendChild(btn);
-  }
 
-  // 🎯 Step 3: Sync live updates for player selections
-  gameRef.on("value", snapshot=>{
-    const data = snapshot.val() || {};
-    for(let i=0;i<7;i++){
-      const btn = numberButtonsDiv.children[i];
-      if(data[i]){
-        btn.classList.remove("available");
-        btn.classList.add("taken");
-        btn.disabled = true;
-      } else {
-        btn.classList.add("available");
-        btn.classList.remove("taken");
-        btn.disabled = false;
-      }
+  // ----------------- Game Logic -----------------
+  function startGame() {
+    const secretWords = ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","pyramid","penguin","castle","carrot","mountain","computer","ocean"];
+    const params = new URLSearchParams(window.location.search);
+    let seed = params.get("seed");
+    if(!seed){
+      seed = Math.floor(Math.random()*1000000);
+      window.location.search = "?seed=" + seed;
     }
-  });
 
-  // 🎯 Step 4: Display player’s word/imposter role
-  function displayWord(i, btn){
-    const wordBox = document.getElementById("wordBox");
-    if(i === imposterIndex){
-      wordBox.innerHTML = "❗ You are the Imposter!";
-    } else {
-      wordBox.innerHTML = "🗝️ Your word is: <b>" + chosenWord + "</b>";
-    }
-    wordBox.style.display = "block";
-  }
-
-  // 🎯 Step 5: Add "Start New Round" functionality
-  document.getElementById("newRoundBtn").addEventListener("click", ()=>{
-    const newSeed = Math.floor(Math.random() * 1000000);
-    window.location.search = "?seed=" + newSeed;
-  });
-}
-</script>
-</body>
-</html>
+    function seededRandom(s
