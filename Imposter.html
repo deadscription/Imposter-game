@@ -1,180 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Imposter Game</title>
 <style>
-  body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    background-color: #121212;
-    color: #eee;
-    text-align: center;
-    padding: 30px 15px;
+  body{font-family:"Segoe UI",Arial,sans-serif;background:#121212;color:#eee;text-align:center;padding:30px 15px}
+  h1{
+    font-size:2.4em;margin-bottom:25px;
+    background:linear-gradient(90deg,#00b3ff,#ff4de1,#00b3ff);
+    background-size:200%;
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    animation:glow 3s linear infinite;
   }
-
-  h1 {
-    color: #fff;
-    font-size: 2.2em;
-    margin-bottom: 25px;
-  }
-
-  section {
-    margin-bottom: 25px;
-  }
-
-  input[type="text"] {
-    padding: 10px 14px;
-    border: none;
-    border-radius: 6px;
-    font-size: 1em;
-    margin-right: 10px;
-  }
-
-  #joinBtn {
-    background-color: #1e88e5;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 10px 16px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  #joinBtn:hover {
-    background-color: #42a5f5;
-  }
-
-  #playersList {
-    display: none;
-    margin-bottom: 20px;
-  }
-
-  #playersList h2 {
-    margin-bottom: 8px;
-    font-size: 1.2em;
-    color: #ccc;
-  }
-
-  #playersUl {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    list-style: none;
-    padding: 0;
-  }
-
-  #playersUl li {
-    background-color: #1f1f1f;
-    border-radius: 8px;
-    padding: 6px 12px;
-    color: #fff;
-    font-size: 0.95em;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .local-player {
-    font-weight: bold;
-  }
-
-  .player-badge {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-
-  #waitingMessage {
-    color: #aaa;
-    margin-bottom: 15px;
-  }
-
-  button {
-    padding: 12px 24px;
-    font-size: 1.1em;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-  }
-
-  #revealBtn {
-    background-color: #4CAF50;
-    color: white;
-    width: 100%;
-    max-width: 280px;
-  }
-  #revealBtn:hover {
-    background-color: #66BB6A;
-    transform: translateY(-2px);
-  }
-
-  #newRoundBtn {
-    background-color: #37474F;
-    color: #ddd;
-    padding: 10px 20px;
-    font-size: 1em;
-    margin-top: 15px;
-    width: auto;
-    min-width: 160px;
-  }
-  #newRoundBtn:hover {
-    background-color: #455A64;
-    transform: translateY(-2px);
-  }
-
-  #wordSection {
-    margin-top: 25px;
-  }
-
-  #wordBox {
-    display: none;
-    margin: 20px auto;
-    font-size: 1.3em;
-    padding: 16px 24px;
-    background-color: #1e1e1e;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    width: fit-content;
-  }
-
-  #toast {
-    position: fixed;
-    bottom: 25px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #333;
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: 8px;
-    opacity: 0;
-    transition: opacity 0.5s;
-    font-size: 0.95em;
-  }
-
-  #toast.show {
-    opacity: 1;
-  }
-
-  @media(max-width: 600px){
-    body { padding: 20px 10px; }
-    #revealBtn {
-      font-size: 1em;
-      padding: 10px 20px;
-      max-width: 90%;
-    }
-    #newRoundBtn {
-      font-size: 0.95em;
-      padding: 8px 18px;
-    }
-    #wordBox {
-      font-size: 1.1em;
-      padding: 12px 18px;
-    }
+  @keyframes glow{0%{background-position:0%}100%{background-position:200%}}
+  section{margin-bottom:20px}
+  input[type="text"]{padding:10px 14px;border:none;border-radius:6px;font-size:1em;margin-right:10px;background:#1f1f1f;color:#fff}
+  #joinBtn{background:#1e88e5;color:#fff;border-radius:6px;padding:10px 16px;border:none;cursor:pointer}
+  #playersList{display:none;margin-bottom:15px}
+  #playersList h2{font-size:1.1em;color:#ccc;margin:0 0 8px}
+  #playersUl{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;list-style:none;padding:0;margin:0}
+  #playersUl li{background:#1f1f1f;border-radius:8px;padding:6px 12px;color:#fff;font-size:.95em;display:flex;align-items:center;gap:6px}
+  .local-player{font-weight:700}
+  .player-badge{width:10px;height:10px;border-radius:50%;display:inline-block}
+  #waitingMessage{color:#aaa;margin-bottom:12px}
+  button{padding:12px 24px;font-size:1.05em;border-radius:10px;border:none;cursor:pointer;box-shadow:0 3px 6px rgba(0,0,0,.2)}
+  #revealBtn{background:#1e88e5;color:#fff;width:100%;max-width:280px}
+  #revealBtn:hover{background:#42a5f5;transform:translateY(-2px)}
+  #newRoundBtn{background:#37474F;color:#ddd;padding:10px 20px;min-width:140px}
+  #newRoundBtn:hover{background:#455A64;transform:translateY(-2px)}
+  #newRoundStatus{margin-top:8px;color:#ccc;font-size:.95em}
+  #wordBox{display:none;margin:25px auto;padding:20px 30px;background:#1e1e1e;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.4);font-size:1.4em;width:fit-content;max-width:90%;font-weight:600}
+  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:8px;opacity:0;transition:opacity .35s;font-size:.95em}
+  #toast.show{opacity:1}
+  @media(max-width:600px){
+    body{padding:20px 10px}
+    #revealBtn{font-size:1em;padding:10px 20px;max-width:90%}
+    #newRoundBtn{font-size:.95em;padding:8px 18px}
+    #wordBox{font-size:1.3em;padding:14px 20px}
   }
 </style>
 </head>
@@ -196,13 +60,13 @@
 
   <section id="controls">
     <button id="revealBtn" disabled>Waiting for players...</button>
-    <button id="newRoundBtn" style="display:none;">Start New Round</button>
+    <div>
+      <button id="newRoundBtn" style="display:none">Start New Round</button>
+      <div id="newRoundStatus"></div>
+    </div>
   </section>
 
-  <section id="wordSection">
-    <h2>🗝️ Your Role</h2>
-    <div id="wordBox"></div>
-  </section>
+  <div id="wordBox"></div>
 
   <div id="toast"></div>
 
@@ -212,165 +76,183 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
-      authDomain: "imposter-game-515d8.firebaseapp.com",
-      databaseURL: "https://imposter-game-515d8-default-rtdb.firebaseio.com",
-      projectId: "imposter-game-515d8",
-      storageBucket: "imposter-game-515d8.firebasestorage.app",
-      messagingSenderId: "727642877069",
-      appId: "1:727642877069:web:35f0113718fdde270b06c4"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+  const firebaseConfig = {
+    apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
+    authDomain: "imposter-game-515d8.firebaseapp.com",
+    databaseURL: "https://imposter-game-515d8-default-rtdb.firebaseio.com",
+    projectId: "imposter-game-515d8",
+    storageBucket: "imposter-game-515d8.firebasestorage.app",
+    messagingSenderId: "727642877069",
+    appId: "1:727642877069:web:35f0113718fdde270b06c4"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const rootRef = db.ref("games");
 
-    firebase.auth().signInAnonymously().then(() => {
-      const rootRef = db.ref("games");
+  firebase.auth().signInAnonymously()
+    .then(() => {
       const currentRoundRef = rootRef.child("currentRound");
-
-      currentRoundRef.on("value", snapshot => {
-        const seed = snapshot.val();
+      currentRoundRef.on("value", snap => {
+        const seed = snap.val();
         if (seed) startGame(seed);
       });
-
       currentRoundRef.once("value").then(s => {
-        if (!s.exists()) currentRoundRef.set(Math.floor(Math.random() * 1000000));
+        if (!s.exists()) currentRoundRef.set(Math.floor(Math.random()*1000000));
       });
+    })
+    .catch(err => alert("Firebase sign-in failed: " + err.message));
+
+  function startGame(seed) {
+    const secretWords = ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","pyramid","penguin","castle","carrot","mountain","computer","ocean"];
+    const seededRandom = s => (Math.sin(s++) * 10000) % 1;
+    const wordIndex = Math.floor(Math.abs(seededRandom(seed)) * secretWords.length);
+    const chosenWord = secretWords[wordIndex];
+
+    const gameRef = db.ref("games/" + seed);
+    const playersRef = gameRef.child("players");
+    const transferFlagRef = rootRef.child("transferInProgress");
+    const newRoundStatus = document.getElementById("newRoundStatus");
+
+    const nameInput = document.getElementById("nameInput");
+    const joinBtn = document.getElementById("joinBtn");
+    const revealBtn = document.getElementById("revealBtn");
+    const newRoundBtn = document.getElementById("newRoundBtn");
+    const wordBox = document.getElementById("wordBox");
+    const waitingMessage = document.getElementById("waitingMessage");
+    const playersListDiv = document.getElementById("playersList");
+    const playersUl = document.getElementById("playersUl");
+    const toast = document.getElementById("toast");
+
+    let playerName = localStorage.getItem("imposterPlayerName") || null;
+    let playerIndex = null;
+    let playerRef = null;
+    let wordVisible = false;
+    let transferActive = false;
+
+    transferFlagRef.on("value", snap => {
+      transferActive = !!snap.val();
+      if (transferActive) newRoundStatus.textContent = "✨ Starting a new round...";
+      else newRoundStatus.textContent = "";
     });
 
-    function startGame(seed) {
-      const secretWords = ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","pyramid","penguin","castle","carrot","mountain","computer","ocean"];
-      const seededRandom = s => (Math.sin(s++) * 10000) % 1;
-      const wordIndex = Math.floor(Math.abs(seededRandom(seed)) * secretWords.length);
-      const chosenWord = secretWords[wordIndex];
-      const gameRef = db.ref("games/" + seed);
-      const playersRef = gameRef.child("players");
+    if (playerName) {
+      document.getElementById("joinSection").style.display = "none";
+      joinGame(playerName);
+    }
 
-      const nameInput = document.getElementById("nameInput");
-      const joinBtn = document.getElementById("joinBtn");
-      const revealBtn = document.getElementById("revealBtn");
-      const newRoundBtn = document.getElementById("newRoundBtn");
-      const wordBox = document.getElementById("wordBox");
-      const waitingMessage = document.getElementById("waitingMessage");
-      const playersListDiv = document.getElementById("playersList");
-      const playersUl = document.getElementById("playersUl");
-      const toast = document.getElementById("toast");
+    joinBtn.onclick = () => {
+      const name = nameInput.value.trim();
+      if (!name) return alert("Please enter a name!");
+      playerName = name;
+      joinGame(name);
+    };
 
-      let playerName = localStorage.getItem("imposterPlayerName") || null;
-      let playerIndex = null;
-      let playerRef = null;
-      let wordVisible = false;
-
-      // Auto rejoin if name saved
-      if (playerName) {
-        document.getElementById("joinSection").style.display = "none";
-        joinGame(playerName);
-      }
-
-      joinBtn.onclick = () => {
-        const name = nameInput.value.trim();
-        if (!name) return alert("Please enter a name!");
-        playerName = name;
-        joinGame(name);
-      };
-
-      function joinGame(name) {
-        playersRef.once("value").then(snap => {
-          const players = snap.val() || {};
-          const idx = Object.keys(players).length;
-          playerIndex = idx;
-          playerRef = playersRef.child(idx);
-          const color = "#" + Math.floor(Math.random() * 16777215).toString(16);
-          playerRef.set({ name, color });
-        });
-        localStorage.setItem("imposterPlayerName", name);
-        document.getElementById("joinSection").style.display = "none";
-
-        // Remove only when closing or navigating away
+    function joinGame(name) {
+      playersRef.once("value").then(snap => {
+        const players = snap.val() || {};
+        const idx = Object.keys(players).length;
+        playerIndex = idx;
+        playerRef = playersRef.child(idx);
+        const color = "#" + Math.floor(Math.random()*16777215).toString(16);
+        playerRef.set({ name, color });
         window.addEventListener("beforeunload", () => {
           if (playerRef) playerRef.remove();
         });
-      }
+      });
+      localStorage.setItem("imposterPlayerName", name);
+      document.getElementById("joinSection").style.display = "none";
+    }
 
-      function showToast(message) {
-        toast.textContent = message;
-        toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 2500);
-      }
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(()=> toast.classList.remove("show"), 2200);
+    }
 
-      // Show message when someone leaves
-      playersRef.on("child_removed", snap => {
-        const left = snap.val();
-        if (left && left.name) showToast(`👋 ${left.name} left the game`);
+    playersRef.on("child_removed", snap => {
+      if (transferActive) return;
+      const left = snap.val();
+      if (left && left.name) showToast(`👋 ${left.name} left the game`);
+    });
+
+    playersRef.on("value", snap => {
+      const players = snap.val() || {};
+      const ids = Object.keys(players);
+      const playerCount = ids.length;
+
+      playersListDiv.style.display = "block";
+      playersUl.innerHTML = "";
+
+      const imposterIndex = playerCount > 0 ? Math.floor(Math.abs(seededRandom(seed * 7)) * playerCount) : null;
+
+      Object.entries(players).forEach(([idx, p]) => {
+        const li = document.createElement("li");
+        const badge = document.createElement("span");
+        badge.className = "player-badge";
+        badge.style.backgroundColor = p.color || "#90caf9";
+        li.appendChild(badge);
+        const label = document.createElement("span");
+        label.textContent = p.name + (parseInt(idx) === playerIndex ? " (You)" : "");
+        li.appendChild(label);
+        if (parseInt(idx) === playerIndex) li.classList.add("local-player");
+        playersUl.appendChild(li);
       });
 
-      playersRef.on("value", snap => {
-        const players = snap.val() || {};
-        const playerCount = Object.keys(players).length;
-
-        playersListDiv.style.display = "block";
-        playersUl.innerHTML = "";
-
-        const imposterIndex = playerCount > 0
-          ? Math.floor(Math.abs(seededRandom(seed * 7)) * playerCount)
-          : null;
-
-        Object.entries(players).forEach(([idx, p]) => {
-          const li = document.createElement("li");
-          const badge = document.createElement("span");
-          badge.className = "player-badge";
-          badge.style.backgroundColor = p.color || "#90caf9";
-          li.appendChild(badge);
-
-          const label = document.createElement("span");
-          label.textContent = p.name + (parseInt(idx) === playerIndex ? " (You)" : "");
-          li.appendChild(label);
-
-          if (parseInt(idx) === playerIndex) li.classList.add("local-player");
-          playersUl.appendChild(li);
-        });
-
-        if (playerCount < 3) {
-          waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
-          revealBtn.disabled = true;
-          revealBtn.textContent = "Waiting for players...";
-        } else {
-          waitingMessage.textContent = "";
-          if (playerName) {
-            revealBtn.disabled = false;
-            if (revealBtn.textContent !== "Hide Word") revealBtn.textContent = "Reveal Word";
-          }
+      if (playerCount < 3) {
+        waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
+        revealBtn.disabled = true;
+        revealBtn.textContent = "Waiting for players...";
+      } else {
+        waitingMessage.textContent = "";
+        if (playerName) {
+          revealBtn.disabled = false;
+          if (revealBtn.textContent !== "Hide Word") revealBtn.textContent = "Reveal Word";
         }
+      }
 
-        // Show Start New Round button for first player always
-        if (playerIndex === 0) {
-          newRoundBtn.style.display = "inline-block";
-          newRoundBtn.onclick = () => {
-            db.ref("games/" + seed).remove();
-            db.ref("games/currentRound").set(Math.floor(Math.random() * 1000000));
-          };
-        } else {
-          newRoundBtn.style.display = "none";
-        }
-
-        revealBtn.onclick = () => {
-          if (!playerName) return;
-          if (!wordVisible) {
-            const imposterIsYou = (playerIndex === imposterIndex);
-            wordBox.innerHTML = imposterIsYou
-              ? "❗ You are the Imposter!"
-              : "🗝️ Your word is: <b>" + chosenWord + "</b>";
-            wordBox.style.display = "block";
-            revealBtn.textContent = "Hide Word";
-            wordVisible = true;
-          } else {
-            wordBox.style.display = "none";
-            revealBtn.textContent = "Reveal Word";
-            wordVisible = false;
+      if (playerIndex === 0) {
+        newRoundBtn.style.display = "inline-block";
+        newRoundBtn.onclick = async () => {
+          newRoundBtn.disabled = true;
+          const newSeed = Math.floor(Math.random()*1000000);
+          try {
+            await transferFlagRef.set(true);
+            const snapshot = await playersRef.once("value");
+            const playersData = snapshot.val() || {};
+            await db.ref("games/" + newSeed + "/players").set(playersData);
+            await rootRef.child("currentRound").set(newSeed);
+          } catch (err) {
+            console.error(err);
+            showToast("Failed to start new round");
+          } finally {
+            setTimeout(() => {
+              transferFlagRef.set(false);
+              newRoundBtn.disabled = false;
+            }, 1000);
           }
         };
-      });
-    }
+      } else {
+        newRoundBtn.style.display = "none";
+      }
+
+      revealBtn.onclick = () => {
+        if (!playerName) return;
+        if (!wordVisible) {
+          const imposterIsYou = (playerIndex === imposterIndex);
+          wordBox.innerHTML = imposterIsYou
+            ? "❗ <b style='color:#ff4d4d;font-size:1.3em;'>You are the Imposter!</b>"
+            : "🗝️ <b style='color:#42a5f5;font-size:1.3em;'>Your word is: " + chosenWord + "</b>";
+          wordBox.style.display = "block";
+          revealBtn.textContent = "Hide Word";
+          wordVisible = true;
+        } else {
+          wordBox.style.display = "none";
+          revealBtn.textContent = "Reveal Word";
+          wordVisible = false;
+        }
+      };
+    });
+  }
   </script>
 </body>
 </html>
