@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Imposter Game</title>
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: #0d1117;
+    color: white;
+    text-align: center;
+  }
+  button {
+    background: #00c896;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 20px;
+  }
+  button:hover {
+    background: #00b085;
+  }
+  .word-box {
+    font-size: 28px;
+    margin-top: 30px;
+    background: #161b22;
+    padding: 20px 40px;
+    border-radius: 10px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+  <h1>🔍 The Imposter Game</h1>
+  <p>There are 7 players. One of you is the imposter!</p>
+  <button id="revealBtn">Reveal Word</button>
+  <div class="word-box" id="wordBox"></div>
+
+<script>
+  const secretWords = ["pizza", "moon", "guitar", "jungle", "volcano", "camera", "robot", "beach", "pyramid", "penguin"];
+  const chosenWord = secretWords[Math.floor(Math.random() * secretWords.length)];
+  const imposterIndex = Math.floor(Math.random() * 7);
+
+  document.getElementById("revealBtn").addEventListener("click", () => {
+    const playerId = prompt("Enter your player number (1 to 7):");
+    const wordBox = document.getElementById("wordBox");
+    if (!playerId || playerId < 1 || playerId > 7) {
+      alert("Please enter a number between 1 and 7");
+      return;
+    }
+    if (parseInt(playerId) - 1 === imposterIndex) {
+      wordBox.innerHTML = "❗ You are the Imposter!";
+    } else {
+      wordBox.innerHTML = "🗝️ Your word is: <b>" + chosenWord + "</b>";
+    }
+    wordBox.style.display = "block";
+    document.getElementById("revealBtn").style.display = "none";
+  });
+</script>
+</body>
+</html>
