@@ -46,10 +46,31 @@
   <div class="word-box" id="wordBox"></div>
 
 <script>
-  const secretWords = ["pizza", "moon", "guitar", "jungle", "volcano", "camera", "robot", "beach", "pyramid", "penguin"];
-  const chosenWord = secretWords[Math.floor(Math.random() * secretWords.length)];
-  const imposterIndex = Math.floor(Math.random() * 7);
+  // --- Shared word and imposter setup ---
+  const secretWords = ["pizza", "moon", "guitar", "jungle", "volcano", "camera", "robot", "beach", "pyramid", "penguin", "castle", "carrot", "mountain", "computer", "ocean"];
+  
+  // Generate shared values once per "session" (same for everyone)
+  // Use the same seed across users (via a fixed random number stored in the URL)
+  const params = new URLSearchParams(window.location.search);
+  let seed = params.get("seed");
+  
+  if (!seed) {
+    seed = Math.floor(Math.random() * 1000000);
+    // Automatically reload with seed in URL to keep it shared
+    window.location.search = "?seed=" + seed;
+  }
 
+  // Use seed to consistently choose the same word and imposter for this session
+  function seededRandom(seed) {
+    const x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+  }
+  
+  const wordIndex = Math.floor(seededRandom(seed) * secretWords.length);
+  const imposterIndex = Math.floor(seededRandom(seed * 7) * 7);
+  const chosenWord = secretWords[wordIndex];
+
+  // --- Gameplay interaction ---
   document.getElementById("revealBtn").addEventListener("click", () => {
     const playerId = prompt("Enter your player number (1 to 7):");
     const wordBox = document.getElementById("wordBox");
@@ -57,11 +78,13 @@
       alert("Please enter a number between 1 and 7");
       return;
     }
+
     if (parseInt(playerId) - 1 === imposterIndex) {
       wordBox.innerHTML = "❗ You are the Imposter!";
     } else {
       wordBox.innerHTML = "🗝️ Your word is: <b>" + chosenWord + "</b>";
     }
+
     wordBox.style.display = "block";
     document.getElementById("revealBtn").style.display = "none";
   });
