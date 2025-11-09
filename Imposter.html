@@ -52,6 +52,19 @@
     border-radius: 10px;
     display: none;
   }
+  #newRoundBtn {
+    margin-top: 40px;
+    background: #00aaff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  #newRoundBtn:hover {
+    background: #0095e0;
+  }
 </style>
 </head>
 <body>
@@ -61,54 +74,61 @@
 
 <div class="number-buttons" id="numberButtons"></div>
 <div class="word-box" id="wordBox"></div>
+<button id="newRoundBtn">🔄 Start New Round</button>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-  // 1️⃣ Your Firebase config here
+  // 🔧 INSERT YOUR FIREBASE CONFIG HERE
   const firebaseConfig = {
+    const firebaseConfig = {
   apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
   authDomain: "imposter-game-515d8.firebaseapp.com",
   projectId: "imposter-game-515d8",
   storageBucket: "imposter-game-515d8.firebasestorage.app",
   messagingSenderId: "727642877069",
   appId: "1:727642877069:web:35f0113718fdde270b06c4"
-};
+  };
+
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // 2️⃣ Random word and imposter setup (shared via URL seed)
+  // 🎯 Step 1: Setup seed + generate shared data
   const secretWords = ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","pyramid","penguin","castle","carrot","mountain","computer","ocean"];
   const params = new URLSearchParams(window.location.search);
   let seed = params.get("seed");
-  if(!seed){ seed = Math.floor(Math.random()*1000000); window.location.search="?seed="+seed; }
+  
+  if(!seed){
+    seed = Math.floor(Math.random()*1000000);
+    window.location.search = "?seed=" + seed;
+  }
 
-  function seededRandom(seed){ const x = Math.sin(seed++)*10000; return x-Math.floor(x); }
-  const wordIndex = Math.floor(seededRandom(seed)*secretWords.length);
-  const imposterIndex = Math.floor(seededRandom(seed*7)*7);
+  function seededRandom(seed){ const x = Math.sin(seed++)*10000; return x - Math.floor(x); }
+  const wordIndex = Math.floor(seededRandom(seed) * secretWords.length);
+  const imposterIndex = Math.floor(seededRandom(seed * 7) * 7);
   const chosenWord = secretWords[wordIndex];
 
-  // 3️⃣ Setup buttons
+  // Firebase path is now unique per seed (each round = new room)
+  const gameRef = db.ref("games/" + seed + "/players");
   const numberButtonsDiv = document.getElementById("numberButtons");
-  const selectedNumbers = Array(7).fill(false);
 
+  // 🎮 Step 2: Create player buttons
   for(let i=0;i<7;i++){
     const btn = document.createElement("button");
-    btn.textContent = i+1;
+    btn.textContent = i + 1;
     btn.classList.add("available");
     btn.disabled = false;
     btn.addEventListener("click", ()=>{
-      // Save selection to Firebase
-      db.ref("players/"+i).set(true);
+      gameRef.child(i).set(true);
       displayWord(i, btn);
     });
     numberButtonsDiv.appendChild(btn);
   }
 
-  // 4️⃣ Listen for live updates
-  db.ref("players").on("value", snapshot=>{
+  // 🎯 Step 3: Sync live updates for player selections
+  gameRef.on("value", snapshot=>{
     const data = snapshot.val() || {};
     for(let i=0;i<7;i++){
       const btn = numberButtonsDiv.children[i];
@@ -124,15 +144,22 @@
     }
   });
 
+  // 🎯 Step 4: Display player’s word/imposter role
   function displayWord(i, btn){
     const wordBox = document.getElementById("wordBox");
-    if(i===imposterIndex){
+    if(i === imposterIndex){
       wordBox.innerHTML = "❗ You are the Imposter!";
     } else {
-      wordBox.innerHTML = "🗝️ Your word is: <b>"+chosenWord+"</b>";
+      wordBox.innerHTML = "🗝️ Your word is: <b>" + chosenWord + "</b>";
     }
     wordBox.style.display = "block";
   }
+
+  // 🎯 Step 5: Add "Start New Round" functionality
+  document.getElementById("newRoundBtn").addEventListener("click", ()=>{
+    const newSeed = Math.floor(Math.random() * 1000000);
+    window.location.search = "?seed=" + newSeed;
+  });
 </script>
 </body>
 </html>
