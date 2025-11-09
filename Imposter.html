@@ -134,7 +134,7 @@
 
   <div id="playerList"></div>
 
-  <button id="revealBtn" style="display:none;">Reveal My Role</button>
+  <button id="revealBtn" style="display:none;">Reveal Word</button>
   <div id="wordBox"></div>
 
   <button id="newRoundBtn">Start New Round</button>
@@ -246,7 +246,7 @@
         if (playerCount < 3) {
           lobbyStatus.textContent = `Waiting for players... (${playerCount}/3 minimum)`;
         } else {
-          lobbyStatus.textContent = "✅ Game ready! You can reveal your role.";
+          lobbyStatus.textContent = "✅ Game ready! You can reveal the word.";
           if (data[playerId]) revealBtn.style.display = "inline-block";
         }
       });
