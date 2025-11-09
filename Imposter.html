@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Imposter Game</title>
 <style>
   body {
@@ -15,11 +15,11 @@
 
   h1 {
     color: #fff;
-    font-size: 2em;
-    margin-bottom: 20px;
+    font-size: 2.2em;
+    margin-bottom: 25px;
   }
 
-  #joinSection {
+  section {
     margin-bottom: 25px;
   }
 
@@ -127,6 +127,10 @@
     transform: translateY(-2px);
   }
 
+  #wordSection {
+    margin-top: 25px;
+  }
+
   #wordBox {
     display: none;
     margin: 20px auto;
@@ -136,6 +140,24 @@
     border-radius: 10px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     width: fit-content;
+  }
+
+  #toast {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.5s;
+    font-size: 0.95em;
+  }
+
+  #toast.show {
+    opacity: 1;
   }
 
   @media(max-width: 600px){
@@ -157,24 +179,32 @@
 </style>
 </head>
 <body>
-  <h1>Imposter Game</h1>
+  <h1>🎭 Imposter Game</h1>
 
-  <div id="joinSection">
+  <section id="joinSection">
+    <h2>🎮 Game Lobby</h2>
     <input id="nameInput" type="text" placeholder="Enter your name" />
     <button id="joinBtn">Join Game</button>
-  </div>
+  </section>
 
-  <div id="playersList">
-    <h2>Players in Game:</h2>
+  <section id="playersList">
+    <h2>👥 Players in Game</h2>
     <ul id="playersUl"></ul>
-  </div>
+  </section>
 
   <div id="waitingMessage"></div>
 
-  <button id="revealBtn" disabled>Waiting for players...</button>
-  <button id="newRoundBtn" style="display:none;">Start New Round</button>
+  <section id="controls">
+    <button id="revealBtn" disabled>Waiting for players...</button>
+    <button id="newRoundBtn" style="display:none;">Start New Round</button>
+  </section>
 
-  <div id="wordBox"></div>
+  <section id="wordSection">
+    <h2>🗝️ Your Role</h2>
+    <div id="wordBox"></div>
+  </section>
+
+  <div id="toast"></div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -224,28 +254,55 @@
       const waitingMessage = document.getElementById("waitingMessage");
       const playersListDiv = document.getElementById("playersList");
       const playersUl = document.getElementById("playersUl");
+      const toast = document.getElementById("toast");
 
-      let playerName = null;
+      let playerName = localStorage.getItem("imposterPlayerName") || null;
       let playerIndex = null;
+      let playerRef = null;
       let wordVisible = false;
+
+      // Auto rejoin if name saved
+      if (playerName) {
+        document.getElementById("joinSection").style.display = "none";
+        joinGame(playerName);
+      }
 
       joinBtn.onclick = () => {
         const name = nameInput.value.trim();
         if (!name) return alert("Please enter a name!");
         playerName = name;
+        joinGame(name);
+      };
 
+      function joinGame(name) {
         playersRef.once("value").then(snap => {
           const players = snap.val() || {};
           const idx = Object.keys(players).length;
           playerIndex = idx;
-          playersRef.child(idx).set({
-            name,
-            color: "#" + Math.floor(Math.random() * 16777215).toString(16)
-          });
+          playerRef = playersRef.child(idx);
+          const color = "#" + Math.floor(Math.random() * 16777215).toString(16);
+          playerRef.set({ name, color });
         });
-
+        localStorage.setItem("imposterPlayerName", name);
         document.getElementById("joinSection").style.display = "none";
-      };
+
+        // Remove only when closing or navigating away
+        window.addEventListener("beforeunload", () => {
+          if (playerRef) playerRef.remove();
+        });
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2500);
+      }
+
+      // Show message when someone leaves
+      playersRef.on("child_removed", snap => {
+        const left = snap.val();
+        if (left && left.name) showToast(`👋 ${left.name} left the game`);
+      });
 
       playersRef.on("value", snap => {
         const players = snap.val() || {};
@@ -285,7 +342,8 @@
           }
         }
 
-        if (playerIndex === 0 && playerCount >= 3) {
+        // Show Start New Round button for first player always
+        if (playerIndex === 0) {
           newRoundBtn.style.display = "inline-block";
           newRoundBtn.onclick = () => {
             db.ref("games/" + seed).remove();
