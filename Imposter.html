@@ -92,8 +92,20 @@
   };
 
   firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+const db = firebase.database();
 
+// 🔒 Sign in anonymously so Firebase rules with "auth != null" still allow writes
+firebase.auth().signInAnonymously()
+  .then(() => {
+    console.log("✅ Signed in anonymously — ready to play!");
+    startGame(); // we'll move your game logic into this function below
+  })
+  .catch(error => {
+    console.error("❌ Authentication error:", error.code, error.message);
+    alert("Could not connect to Firebase. Please refresh or try again later.");
+  });
+
+function startGame() {
   // 🎯 Step 1: Setup seed + generate shared data
   const secretWords = ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","pyramid","penguin","castle","carrot","mountain","computer","ocean"];
   const params = new URLSearchParams(window.location.search);
@@ -159,6 +171,7 @@
     const newSeed = Math.floor(Math.random() * 1000000);
     window.location.search = "?seed=" + newSeed;
   });
+}
 </script>
 </body>
 </html>
