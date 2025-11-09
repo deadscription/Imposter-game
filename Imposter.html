@@ -170,7 +170,7 @@
           if (seed) startGame(seed);
         });
 
-        // Initialize if missing
+        // Initialize round if missing
         currentRoundRef.once("value").then(snapshot => {
           if (!snapshot.exists()) {
             currentRoundRef.set(Math.floor(Math.random() * 1000000));
@@ -183,7 +183,7 @@
       const secretWords = ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","pyramid","penguin","castle","carrot","mountain","computer","ocean"];
       document.getElementById("roundInfo").textContent = "Round: " + seed;
 
-      // Deterministic seed function
+      // Deterministic selection
       function seededRandom(seed){ return (Math.sin(seed++) * 10000) % 1; }
       const wordIndex = Math.floor(Math.abs(seededRandom(seed)) * secretWords.length);
       const imposterIndex = Math.floor(Math.abs(seededRandom(seed * 7)) * 7);
@@ -191,16 +191,21 @@
 
       const playersRef = db.ref("games/rounds/" + seed + "/players");
 
-      // Reset UI
       const nameInputContainer = document.getElementById("nameInputContainer");
       const lobbyStatus = document.getElementById("lobbyStatus");
       const playerListDiv = document.getElementById("playerList");
       const revealBtn = document.getElementById("revealBtn");
       const wordBox = document.getElementById("wordBox");
+      const nameInput = document.getElementById("nameInput");
+      const submitNameBtn = document.getElementById("submitNameBtn");
+
+      // Reset UI
       wordBox.style.display = "none";
       revealBtn.style.display = "none";
-      lobbyStatus.style.display = "none";
       playerListDiv.innerHTML = "";
+      lobbyStatus.style.display = "block";
+      lobbyStatus.textContent = "Waiting for players...";
+      nameInputContainer.style.display = "block";
 
       let playerId = localStorage.getItem("playerId");
       if (!playerId) {
@@ -208,9 +213,7 @@
         localStorage.setItem("playerId", playerId);
       }
 
-      const nameInput = document.getElementById("nameInput");
-      const submitNameBtn = document.getElementById("submitNameBtn");
-
+      // Handle player join
       submitNameBtn.onclick = () => {
         const playerName = nameInput.value.trim();
         if (!playerName) {
@@ -220,20 +223,23 @@
 
         playersRef.child(playerId).set({ name: playerName });
 
+        // Remove player when leaving
+        playersRef.child(playerId).onDisconnect().remove();
+
         nameInputContainer.style.display = "none";
-        lobbyStatus.style.display = "block";
       };
 
-      // Real-time player updates
+      // Listen for live player updates
       playersRef.on("value", snapshot => {
         const data = snapshot.val() || {};
-        const playerCount = Object.keys(data).length;
+        const playerIds = Object.keys(data);
+        const playerCount = playerIds.length;
 
         playerListDiv.innerHTML = "";
-        Object.values(data).forEach(p => {
+        playerIds.forEach(id => {
           const div = document.createElement("div");
           div.classList.add("playerName");
-          div.textContent = p.name;
+          div.textContent = data[id].name;
           playerListDiv.appendChild(div);
         });
 
@@ -248,8 +254,8 @@
       // Reveal word/imposter
       revealBtn.onclick = () => {
         playersRef.once("value").then(snapshot => {
-          const playerIds = Object.keys(snapshot.val() || {});
-          const playerIndex = playerIds.indexOf(playerId);
+          const players = snapshot.val() || {};
+          const playerIds = Object.keys(players);
           const imposterPlayerId = playerIds[imposterIndex % playerIds.length];
           const isImposter = playerId === imposterPlayerId;
 
@@ -263,7 +269,7 @@
         });
       };
 
-      // Start new round (syncs across players)
+      // Start new round
       document.getElementById("newRoundBtn").onclick = () => {
         const newSeed = Math.floor(Math.random() * 1000000);
         db.ref("games/currentRound").set(newSeed);
