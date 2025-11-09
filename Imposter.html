@@ -216,221 +216,173 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
- <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
-    authDomain: "imposter-game-515d8.firebaseapp.com",
-    databaseURL: "https://imposter-game-515d8-default-rtdb.firebaseio.com",
-    projectId: "imposter-game-515d8",
-    storageBucket: "imposter-game-515d8.firebasestorage.app",
-    messagingSenderId: "727642877069",
-    appId: "1:727642877069:web:35f0113718fdde270b06c4"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  firebase.auth().signInAnonymously()
-    .then(() => initGame())
-    .catch(err => alert("Firebase sign-in failed: " + err));
-
-  function initGame() {
-    const rootRef = db.ref("games");
-    const currentRoundRef = rootRef.child("currentRound");
-
-    currentRoundRef.on("value", snapshot => {
-      const seed = snapshot.val();
-      if (seed) startRound(seed);
-    });
-
-    currentRoundRef.once("value").then(snap => {
-      if (!snap.exists()) currentRoundRef.set(Math.floor(Math.random() * 1000000));
-    });
-  }
-
-  async function fetchWordsFromWeb(category) {
-    try {
-      const url = `https://random-word-api.herokuapp.com/word?number=15`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Fetch failed");
-      const words = await res.json();
-      // Optionally filter by category keyword (not perfect but gives flavor)
-      if (category && category !== "Random") {
-        return words.filter(w => w.length > 3).slice(0, 10);
-      }
-      return words.slice(0, 10);
-    } catch (e) {
-      console.warn("Word fetch failed, using local list.", e);
-      return ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","castle","mountain","computer","ocean","penguin","forest","diamond"];
-    }
-  }
-
-  async function startRound(seed) {
-    const playersRef = db.ref("games/" + seed + "/players");
-    const categoryRef = db.ref("games/" + seed + "/category");
-    const currentRoundRef = db.ref("games/currentRound");
-
-    const nameInput = document.getElementById("nameInput");
-    const joinBtn = document.getElementById("joinBtn");
-    const playersListDiv = document.getElementById("playersList");
-    const playersUl = document.getElementById("playersUl");
-    const revealBtn = document.getElementById("revealBtn");
-    const wordBox = document.getElementById("wordBox");
-    const newRoundBtn = document.getElementById("newRoundBtn");
-    const waitingMessage = document.getElementById("waitingMessage");
-
-    playersUl.innerHTML = "";
-    playersListDiv.style.display = "none";
-    wordBox.style.display = "none";
-    revealBtn.style.display = "none";
-    newRoundBtn.style.display = "none";
-    waitingMessage.textContent = "";
-
-    nameInput.style.display = "inline-block";
-    joinBtn.style.display = "inline-block";
-    joinBtn.disabled = false;
-    joinBtn.textContent = "Join Game";
-    nameInput.value = "";
-
-    let playerName = null;
-    let playerIndex = null;
-    let wordVisible = false;
-    let chosenWord = "";
-    let imposterIndex = 0;
-    let category = "Random";
-    const playerColor = "#" + Math.floor(Math.random()*16777215).toString(16);
-
-    // Create category dropdown for host
-    let categorySelect = document.getElementById("categorySelect");
-    if (!categorySelect) {
-      categorySelect = document.createElement("select");
-      categorySelect.id = "categorySelect";
-      categorySelect.innerHTML = `
-        <option>Random</option>
-        <option>Food</option>
-        <option>Nature</option>
-        <option>Objects</option>
-        <option>Places</option>
-      `;
-      categorySelect.style.margin = "10px";
-      categorySelect.style.padding = "10px";
-      categorySelect.style.borderRadius = "8px";
-      categorySelect.style.background = "#1f1f1f";
-      categorySelect.style.color = "#fff";
-      categorySelect.style.fontSize = "1em";
-      joinBtn.parentNode.insertBefore(categorySelect, nameInput);
-    }
-
-    joinBtn.onclick = async () => {
-      const name = nameInput.value.trim();
-      if (!name) return alert("Enter a name!");
-
-      const playersSnap = await playersRef.once("value");
-      const players = playersSnap.val() || {};
-      const existingNames = Object.values(players).map(p => p.name.toLowerCase());
-      if (existingNames.includes(name.toLowerCase())) return alert("Name already taken!");
-
-      playerIndex = Object.keys(players).length;
-      playerName = name;
-
-      playersRef.child(playerIndex).set({ name, color: playerColor });
-
-      nameInput.style.display = "none";
-      joinBtn.style.display = "none";
-      categorySelect.style.display = "none";
-      revealBtn.style.display = "inline-block";
-      revealBtn.disabled = true;
-      revealBtn.textContent = "Waiting for players...";
-
-      if (playerIndex === 0) {
-        category = categorySelect.value;
-        categoryRef.set(category);
-      }
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
+      authDomain: "imposter-game-515d8.firebaseapp.com",
+      databaseURL: "https://imposter-game-515d8-default-rtdb.firebaseio.com",
+      projectId: "imposter-game-515d8",
+      storageBucket: "imposter-game-515d8.firebasestorage.app",
+      messagingSenderId: "727642877069",
+      appId: "1:727642877069:web:35f0113718fdde270b06c4"
     };
 
-    categoryRef.on("value", async snap => {
-      if (snap.exists()) {
-        category = snap.val();
-        waitingMessage.textContent = `Category: ${category}`;
-        const words = await fetchWordsFromWeb(category);
-        const seededRandom = s => (Math.sin(s++) * 10000) % 1;
-        const wordIndex = Math.floor(Math.abs(seededRandom(seed)) * words.length);
-        chosenWord = words[wordIndex];
-      }
-    });
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    playersRef.on("value", snap => {
-      const players = snap.val() || {};
-      const playerCount = Object.keys(players).length;
-      if (playerCount > 0) {
-        const seededRandom = s => (Math.sin(s++) * 10000) % 1;
+    firebase.auth().signInAnonymously()
+      .then(() => initGame())
+      .catch(err => alert("Firebase sign-in failed: " + err));
+
+    function initGame() {
+      const rootRef = db.ref("games");
+      const currentRoundRef = rootRef.child("currentRound");
+
+      currentRoundRef.on("value", snapshot => {
+        const seed = snapshot.val();
+        if (seed) startRound(seed);
+      });
+
+      // Initialize if first load
+      currentRoundRef.once("value").then(snap => {
+        if (!snap.exists()) currentRoundRef.set(Math.floor(Math.random() * 1000000));
+      });
+    }
+
+    function startRound(seed) {
+      const secretWords = ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","castle","mountain","computer","ocean","penguin","forest","diamond"];
+      const seededRandom = s => (Math.sin(s++) * 10000) % 1;
+      const wordIndex = Math.floor(Math.abs(seededRandom(seed)) * secretWords.length);
+      let imposterIndex = 0; // will be decided after players join
+      const chosenWord = secretWords[wordIndex];
+
+      const playersRef = db.ref("games/" + seed + "/players");
+      const currentRoundRef = db.ref("games/currentRound");
+
+      const nameInput = document.getElementById("nameInput");
+      const joinBtn = document.getElementById("joinBtn");
+      const playersListDiv = document.getElementById("playersList");
+      const playersUl = document.getElementById("playersUl");
+      const revealBtn = document.getElementById("revealBtn");
+      const wordBox = document.getElementById("wordBox");
+      const newRoundBtn = document.getElementById("newRoundBtn");
+      const waitingMessage = document.getElementById("waitingMessage");
+
+      
+      // Reset UI for new round
+      playersUl.innerHTML = "";
+      playersListDiv.style.display = "none";
+      wordBox.style.display = "none";
+      revealBtn.style.display = "none";
+      newRoundBtn.style.display = "none";
+      waitingMessage.textContent = "";
+      
+      // Show name input and join again
+      nameInput.style.display = "inline-block";
+      joinBtn.style.display = "inline-block";
+      joinBtn.disabled = false;
+      joinBtn.textContent = "Join Game";
+      nameInput.value = "";
+
+      let playerName = null;
+      let playerIndex = null;
+      let wordVisible = false;
+      const playerColor = "#" + Math.floor(Math.random()*16777215).toString(16);
+
+      joinBtn.onclick = () => {
+        const name = nameInput.value.trim();
+        if (!name) return alert("Enter a name!");
+
+        playersRef.once("value").then(snap => {
+          const players = snap.val() || {};
+          const existingNames = Object.values(players).map(p => p.name.toLowerCase());
+          if (existingNames.includes(name.toLowerCase())) return alert("Name already taken!");
+
+          playerIndex = Object.keys(players).length;
+          playerName = name;
+          playersRef.child(playerIndex).set({ name, color: playerColor });
+          // Make sure our local index is set right away
+          playerIndex = playerIndex;
+          
+          nameInput.style.display = "none";
+          joinBtn.style.display = "none";
+          revealBtn.style.display = "inline-block";
+          revealBtn.disabled = true;
+          revealBtn.textContent = "Waiting for players...";
+        });
+      };
+
+      playersRef.on("value", snap => {
+        const players = snap.val() || {};
+        const playerCount = Object.keys(players).length;
+        if (playerCount > 0) {
         imposterIndex = Math.floor(Math.abs(seededRandom(seed * 7)) * playerCount);
       }
 
-      playersListDiv.style.display = "block";
-      playersUl.innerHTML = "";
+        playersListDiv.style.display = "block";
+        playersUl.innerHTML = "";
 
-      Object.entries(players).forEach(([idx, p]) => {
-        const li = document.createElement("li");
-        const badge = document.createElement("span");
-        badge.className = "player-badge";
-        badge.style.color = p.color || "#90caf9";
-        li.appendChild(badge);
+        Object.entries(players).forEach(([idx, p]) => {
+          const li = document.createElement("li");
+          const badge = document.createElement("span");
+          badge.className = "player-badge";
+          badge.style.color = p.color || "#90caf9";
+          li.appendChild(badge);
 
-        const label = document.createElement("span");
-        label.textContent = p.name + (parseInt(idx) === playerIndex ? " (You)" : "");
-        li.appendChild(label);
+          const label = document.createElement("span");
+          label.textContent = p.name + (parseInt(idx) === playerIndex ? " (You)" : "");
+          li.appendChild(label);
 
-        if (parseInt(idx) === playerIndex) li.classList.add("local-player");
-        playersUl.appendChild(li);
+          if (parseInt(idx) === playerIndex) li.classList.add("local-player");
+          playersUl.appendChild(li);
+        });
+
+        if (playerCount < 3) {
+  waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
+  revealBtn.disabled = true;
+  revealBtn.textContent = "Waiting for players...";
+} else {
+  waitingMessage.textContent = "";
+
+  // Give Firebase a short moment to confirm the new player's index
+  setTimeout(() => {
+    if (playerName && playerIndex !== null && playerIndex !== undefined) {
+      revealBtn.disabled = false;
+      if (revealBtn.textContent !== "Hide Word") {
+        revealBtn.textContent = "Reveal Word";
+      }
+    }
+  }, 300);
+}
+        if (playerIndex === 0 && playerCount >= 3) {
+          newRoundBtn.style.display = "inline-block";
+          newRoundBtn.onclick = () => {
+            db.ref("games/" + seed).remove();
+            currentRoundRef.set(Math.floor(Math.random() * 1000000));
+          };
+        } else {
+          newRoundBtn.style.display = "none";
+        }
       });
 
-      if (playerCount < 3) {
-        waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
-        revealBtn.disabled = true;
-        revealBtn.textContent = "Waiting for players...";
-      } else {
-        waitingMessage.textContent = `Category: ${category}`;
-        setTimeout(() => {
-          if (playerName != null) {
-            revealBtn.disabled = false;
-            if (revealBtn.textContent !== "Hide Word") {
-              revealBtn.textContent = "Reveal Word";
-            }
-          }
-        }, 300);
-      }
+      revealBtn.onclick = () => {
+        if (!playerName) return;
 
-      if (playerIndex === 0 && playerCount >= 3) {
-        newRoundBtn.style.display = "inline-block";
-        newRoundBtn.onclick = () => {
-          db.ref("games/" + seed).remove();
-          currentRoundRef.set(Math.floor(Math.random() * 1000000));
-        };
-      } else {
-        newRoundBtn.style.display = "none";
-      }
-    });
-
-    revealBtn.onclick = () => {
-      if (!playerName) return;
-
-      if (!wordVisible) {
-        const imposterIsYou = (playerIndex === imposterIndex);
-        wordBox.innerHTML = imposterIsYou
-          ? "❗ You are the Imposter!"
-          : "🗝️ Your word is: <b>" + chosenWord + "</b>";
-        wordBox.style.display = "block";
-        revealBtn.textContent = "Hide Word";
-        wordVisible = true;
-      } else {
-        wordBox.style.display = "none";
-        revealBtn.textContent = "Reveal Word";
-        wordVisible = false;
-      }
-    };
-  }
-</script>
-
+        if (!wordVisible) {
+          const imposterIsYou = (playerIndex === imposterIndex);
+          wordBox.innerHTML = imposterIsYou
+            ? "❗ You are the Imposter!"
+            : "🗝️ Your word is: <b>" + chosenWord + "</b>";
+          wordBox.style.display = "block";
+          revealBtn.textContent = "Hide Word";
+          wordVisible = true;
+        } else {
+          wordBox.style.display = "none";
+          revealBtn.textContent = "Reveal Word";
+          wordVisible = false;
+        }
+      };
+    }
+  </script>
 </body>
 </html>
