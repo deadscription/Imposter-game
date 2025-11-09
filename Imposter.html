@@ -35,7 +35,7 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // --------------- Health Check & Start Game ---------------
+  // ----------------- Auth & Health Check -----------------
   firebase.auth().signInAnonymously()
     .then(() => {
       console.log("✅ Anonymous sign-in successful");
@@ -45,7 +45,7 @@
         .then(() => testRef.once("value"))
         .then(snapshot => {
           console.log("✅ Database test passed, starting game!");
-          startGame();
+          startGame(); // initial game start
         })
         .catch(err => {
           console.error("❌ Database test failed:", err);
@@ -58,13 +58,79 @@
     });
 
   // ----------------- Game Logic -----------------
-  function startGame() {
+  function startGame(seedFromParam = null) {
     const secretWords = ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","pyramid","penguin","castle","carrot","mountain","computer","ocean"];
     const params = new URLSearchParams(window.location.search);
-    let seed = params.get("seed");
+    let seed = seedFromParam || params.get("seed");
     if(!seed){
       seed = Math.floor(Math.random()*1000000);
-      window.location.search = "?seed=" + seed;
+      window.history.replaceState({}, "", "?seed=" + seed);
     }
 
-    function seededRandom(s
+    function seededRandom(seed){ const x = Math.sin(seed++)*10000; return x - Math.floor(x); }
+    const wordIndex = Math.floor(seededRandom(seed) * secretWords.length);
+    const imposterIndex = Math.floor(seededRandom(seed * 7) * 7);
+    const chosenWord = secretWords[wordIndex];
+
+    const gameRef = db.ref("games/" + seed + "/players");
+    const numberButtonsDiv = document.getElementById("numberButtons");
+
+    // Create player buttons
+    numberButtonsDiv.innerHTML = ""; // clear previous
+    for(let i=0;i<7;i++){
+      const btn = document.createElement("button");
+      btn.textContent = i + 1;
+      btn.classList.add("available");
+      btn.disabled = false;
+      btn.addEventListener("click", ()=>{
+        gameRef.child(i).set(true);
+        displayWord(i, btn);
+      });
+      numberButtonsDiv.appendChild(btn);
+    }
+
+    // Sync live updates
+    gameRef.on("value", snapshot=>{
+      const data = snapshot.val() || {};
+      for(let i=0;i<7;i++){
+        const btn = numberButtonsDiv.children[i];
+        if(data[i]){
+          btn.classList.remove("available");
+          btn.classList.add("taken");
+          btn.disabled = true;
+        } else {
+          btn.classList.add("available");
+          btn.classList.remove("taken");
+          btn.disabled = false;
+        }
+      }
+    });
+
+    // Show player's word/imposter
+    function displayWord(i, btn){
+      const wordBox = document.getElementById("wordBox");
+      if(i === imposterIndex){
+        wordBox.innerHTML = "❗ You are the Imposter!";
+      } else {
+        wordBox.innerHTML = "🗝️ Your word is: <b>" + chosenWord + "</b>";
+      }
+      wordBox.style.display = "block";
+    }
+
+    // Start New Round
+    document.getElementById("newRoundBtn").onclick = () => {
+      const newSeed = Math.floor(Math.random() * 1000000);
+      const newURL = window.location.origin + window.location.pathname + "?seed=" + newSeed;
+      window.history.pushState({}, "", newURL);
+
+      // Clear previous game
+      document.getElementById("numberButtons").innerHTML = "";
+      document.getElementById("wordBox").style.display = "none";
+
+      // Start a fresh round
+      startGame(newSeed);
+    };
+  }
+  </script>
+</body>
+</html>
