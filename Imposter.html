@@ -278,7 +278,9 @@
           playerIndex = Object.keys(players).length;
           playerName = name;
           playersRef.child(playerIndex).set({ name, color: playerColor });
-
+          // Make sure our local index is set right away
+          playerIndex = playerIndex;
+          
           nameInput.style.display = "none";
           joinBtn.style.display = "none";
           revealBtn.style.display = "inline-block";
@@ -310,15 +312,22 @@
         });
 
         if (playerCount < 3) {
-          waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
-          revealBtn.disabled = true;
-          revealBtn.textContent = "Waiting for players...";
-        } else {
-          waitingMessage.textContent = "";
-          revealBtn.disabled = false;
-          if (revealBtn.textContent !== "Hide Word") revealBtn.textContent = "Reveal Word";
-        }
+  waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
+  revealBtn.disabled = true;
+  revealBtn.textContent = "Waiting for players...";
+} else {
+  waitingMessage.textContent = "";
 
+  // Give Firebase a short moment to confirm the new player's index
+  setTimeout(() => {
+    if (playerName && playerIndex !== null && playerIndex !== undefined) {
+      revealBtn.disabled = false;
+      if (revealBtn.textContent !== "Hide Word") {
+        revealBtn.textContent = "Reveal Word";
+      }
+    }
+  }, 300);
+}
         if (playerIndex === 0 && playerCount >= 3) {
           newRoundBtn.style.display = "inline-block";
           newRoundBtn.onclick = () => {
