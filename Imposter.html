@@ -14,6 +14,21 @@
       max-width: 600px;
       margin: 0 auto;
     }
+    @keyframes smoothReveal {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.word-visible {
+  animation: smoothReveal 0.5s ease forwards;
+}
+
 
     h1 {
       font-size: 2.6em;
@@ -427,33 +442,29 @@
         if (snap.exists()) chosenWord = snap.val();
       });
 
-      revealBtn.onclick = () => {
-        if (!playerName) return;
-        if (!category) return alert("Category not set yet!");
-        if (!chosenWord || imposterIndex === null) {
-          revealBtn.disabled = true;
-          revealBtn.textContent = "Loading...";
-          setTimeout(() => {
-            revealBtn.disabled = false;
-            revealBtn.textContent = "Reveal Word";
-          }, 800);
-          return;
-        }
+revealBtn.onclick = () => {
+  if (!playerName) return;
+  if (!category) return alert("Category not set yet!");
 
-        if (!wordVisible) {
-          const imposterIsYou = (playerIndex === imposterIndex);
-          wordBox.innerHTML = imposterIsYou
-            ? "❗ You are the Imposter!"
-            : `🗝️ Your word is: <b>${chosenWord}</b>`;
-          wordBox.style.display = "block";
-          revealBtn.textContent = "Hide Word";
-          wordVisible = true;
-        } else {
-          wordBox.style.display = "none";
-          revealBtn.textContent = "Reveal Word";
-          wordVisible = false;
-        }
-      };
+  if (!wordVisible) {
+    const imposterIsYou = (playerIndex === imposterIndex);
+    wordBox.innerHTML = imposterIsYou
+      ? "❗ <b>You are the Imposter!</b>"
+      : `🗝️ Your word is: <b>${chosenWord}</b>`;
+    wordBox.style.display = "block";
+    wordBox.classList.remove("word-visible"); // reset animation
+    void wordBox.offsetWidth; // force reflow for restart
+    wordBox.classList.add("word-visible");
+
+    revealBtn.textContent = "Hide Word";
+    wordVisible = true;
+  } else {
+    wordBox.style.display = "none";
+    revealBtn.textContent = "Reveal Word";
+    wordVisible = false;
+  }
+};
+
     }
   </script>
 </body>
