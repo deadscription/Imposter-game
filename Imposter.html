@@ -24,6 +24,17 @@
     transform: scale(1) translateY(0);
   }
 }
+    #playersList div {
+  margin: 4px 6px;
+  display: inline-block;
+  color: #ddd;
+}
+
+#playersList div span {
+  color: #999;
+  font-size: 0.9em;
+}
+
 
 .word-visible {
   animation: smoothReveal 0.5s ease forwards;
@@ -364,20 +375,32 @@
 
         playersListDiv.style.display = "block";
         playersUl.innerHTML = "";
-        Object.entries(players).forEach(([idx, p]) => {
-          const li = document.createElement("li");
-          const badge = document.createElement("span");
-          badge.className = "player-badge";
-          badge.style.color = p.color || "#90caf9";
-          li.appendChild(badge);
+     Object.entries(players).forEach(([idx, p]) => {
+  const li = document.createElement("li");
+  const badge = document.createElement("span");
+  badge.className = "player-badge";
+  badge.style.color = p.color || "#90caf9";
+  li.appendChild(badge);
 
-          const label = document.createElement("span");
-          label.textContent = p.name + (parseInt(idx) === playerIndex ? " (You)" : "");
-          li.appendChild(label);
+  const label = document.createElement("span");
+  const isHost = parseInt(idx) === 0;
+  const isYou = parseInt(idx) === playerIndex;
 
-          if (parseInt(idx) === playerIndex) li.classList.add("local-player");
-          playersUl.appendChild(li);
-        });
+  if (isHost && isYou) {
+    label.textContent = `${p.name} (You)(Host)`;
+  } else if (isYou) {
+    label.textContent = `${p.name} (You)`;
+  } else if (isHost) {
+    label.textContent = `${p.name} (Host)`;
+  } else {
+    label.textContent = p.name;
+  }
+
+  li.appendChild(label);
+  if (isYou) li.classList.add("local-player");
+  playersUl.appendChild(li);
+});
+
 
         if (playerCount < 3) {
           waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
