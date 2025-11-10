@@ -229,6 +229,8 @@
     <div id="chosenCategory" style="margin-top:10px; font-size:1.2em; color:#ffb74d;"></div>
   </div>
 
+  <div id="waitingCategoryMessage" style="display:none; font-size:1.1em; color:#bbb; margin-top:10px;"></div>
+
   <button id="revealBtn" disabled style="display:none;">Reveal Word</button>
 
   <div id="wordBox"></div>
@@ -285,6 +287,8 @@
     }
 
     function startRound(seed) {
+      const waitingCategoryMessage = document.getElementById("waitingCategoryMessage");
+
       const playersRef = db.ref("games/" + seed + "/players");
       const categoryRef = db.ref("games/" + seed + "/category");
       const imposterRef = db.ref("games/" + seed + "/imposter");
@@ -318,8 +322,12 @@
       joinBtn.textContent = "Join Game";
       nameInput.value = "";
 
-      categorySection.style.display = "none";
+     categorySection.style.display = "none";
       chosenCategoryDiv.textContent = "";
+      categorySelect.disabled = false;
+      chooseCategoryBtn.disabled = false;
+      categorySelect.value = "";
+
 
       let playerName = null;
       let playerIndex = null;
@@ -374,16 +382,27 @@
         if (playerCount < 3) {
           waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
           revealBtn.disabled = true;
-          revealBtn.textContent = "Waiting for players...";
-        } else if (playerName !== null && playerIndex !== null) {
-          waitingMessage.textContent = "";
-          setTimeout(() => {
-            revealBtn.disabled = false;
-            if (revealBtn.textContent !== "Hide Word") {
-              revealBtn.textContent = "Reveal Word";
-            }
-          }, 400);
-        }
+      } else if (playerName !== null && playerIndex !== null) {
+  waitingMessage.textContent = "";
+
+  // If category not selected yet, show waiting message for others
+  categoryRef.once("value").then(catSnap => {
+    const hasCategory = !!catSnap.val();
+    if (!hasCategory && playerIndex !== 0) {
+      waitingCategoryMessage.style.display = "block";
+      waitingCategoryMessage.textContent = "Waiting for host to select the Category...";
+      revealBtn.disabled = true;
+      revealBtn.textContent = "Reveal Word";
+    } else {
+      waitingCategoryMessage.style.display = "none";
+      revealBtn.disabled = false;
+      if (revealBtn.textContent !== "Hide Word") {
+        revealBtn.textContent = "Reveal Word";
+      }
+    }
+  });
+}
+
 
         if (playerIndex === 0 && playerCount >= 3) {
           newRoundBtn.style.display = "inline-block";
@@ -429,6 +448,10 @@
       categoryRef.on("value", snap => {
         const catVal = snap.val();
         if (catVal) {
+          waitingCategoryMessage.style.display = "none";
+revealBtn.disabled = false;
+revealBtn.textContent = "Reveal Word";
+
           category = catVal;
           chosenCategoryDiv.textContent = `Category: ${catVal}`;
         }
