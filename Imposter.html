@@ -259,7 +259,6 @@
 
     async function fetchWords(category) {
       try {
-        // Using a free random words API
         const res = await fetch('https://random-word-api.herokuapp.com/word?number=5');
         if (!res.ok) throw new Error("fetch failed");
         const arr = await res.json();
@@ -273,6 +272,8 @@
     function startRound(seed) {
       const playersRef = db.ref("games/" + seed + "/players");
       const categoryRef = db.ref("games/" + seed + "/category");
+      const imposterRef = db.ref("games/" + seed + "/imposter");
+      const wordRef = db.ref("games/" + seed + "/word");
       const currentRoundRef = db.ref("games/currentRound");
 
       const nameInput = document.getElementById("nameInput");
@@ -310,6 +311,7 @@
       let wordVisible = false;
       let category = null;
       let chosenWord = "";
+      let imposterIndex = null;  // 🔹 Persistent across listeners
       const playerColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
 
       joinBtn.onclick = () => {
@@ -337,13 +339,6 @@
         const players = snap.val() || {};
         const playerCount = Object.keys(players).length;
 
-        // Determine imposter index dynamically
-        const seededRandom = s => (Math.sin(s++) * 10000) % 1;
-        let imposterIndex = 0;
-        if (playerCount > 0) {
-          imposterIndex = Math.floor(Math.abs(seededRandom(seed * 7)) * playerCount);
-        }
-
         playersListDiv.style.display = "block";
         playersUl.innerHTML = "";
         Object.entries(players).forEach(([idx, p]) => {
@@ -365,12 +360,14 @@
           waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
           revealBtn.disabled = true;
           revealBtn.textContent = "Waiting for players...";
-        } else {
+        } else if (playerName !== null && playerIndex !== null) {
           waitingMessage.textContent = "";
-          if (playerName !== null) {
+          setTimeout(() => {
             revealBtn.disabled = false;
-            revealBtn.textContent = "Reveal Word";
-          }
+            if (revealBtn.textContent !== "Hide Word") {
+              revealBtn.textContent = "Reveal Word";
+            }
+          }, 400);
         }
 
         if (playerIndex === 0 && playerCount >= 3) {
@@ -380,45 +377,68 @@
             currentRoundRef.set(Math.floor(Math.random() * 1000000));
           };
 
-          // category selector for host
           categorySection.style.display = "block";
           categorySelect.style.display = "inline-block";
           chooseCategoryBtn.style.display = "inline-block";
           chosenCategoryDiv.textContent = "";
-          chooseCategoryBtn.onclick = () => {
+
+          chooseCategoryBtn.onclick = async () => {
             const sel = categorySelect.value;
             if (!sel) return alert("Please select a category");
+
             categoryRef.set(sel);
             category = sel;
             chosenCategoryDiv.textContent = `Selected: ${sel}`;
             categorySelect.disabled = true;
             chooseCategoryBtn.disabled = true;
+
+            // 🔹 Host sets the word and imposter
+            const words = await fetchWords(sel);
+            const seededRandom = s => (Math.sin(s++) * 10000) % 1;
+            const wordIndex = Math.floor(Math.abs(seededRandom(seed)) * words.length);
+            const chosen = words[wordIndex];
+            const playersSnap = await playersRef.once("value");
+            const playerCount = playersSnap.exists() ? Object.keys(playersSnap.val()).length : 0;
+            const imposter = Math.floor(Math.abs(seededRandom(seed * 7)) * playerCount);
+
+            wordRef.set(chosen);
+            imposterRef.set(imposter);
           };
         } else {
-          // hide selector for others
           categorySection.style.display = "block";
           categorySelect.style.display = "none";
           chooseCategoryBtn.style.display = "none";
         }
-
       });
 
-      categoryRef.on("value", async snap => {
+      categoryRef.on("value", snap => {
         const catVal = snap.val();
         if (catVal) {
           category = catVal;
           chosenCategoryDiv.textContent = `Category: ${catVal}`;
-          // once category is chosen, fetch words
-          const words = await fetchWords(category);
-          const seededRandom = s => (Math.sin(s++) * 10000) % 1;
-          const wordIndex = Math.floor(Math.abs(seededRandom(seed)) * words.length);
-          chosenWord = words[wordIndex];
         }
+      });
+
+      imposterRef.on("value", snap => {
+        if (snap.exists()) imposterIndex = snap.val();
+      });
+
+      wordRef.on("value", snap => {
+        if (snap.exists()) chosenWord = snap.val();
       });
 
       revealBtn.onclick = () => {
         if (!playerName) return;
         if (!category) return alert("Category not set yet!");
+        if (!chosenWord || imposterIndex === null) {
+          revealBtn.disabled = true;
+          revealBtn.textContent = "Loading...";
+          setTimeout(() => {
+            revealBtn.disabled = false;
+            revealBtn.textContent = "Reveal Word";
+          }, 800);
+          return;
+        }
 
         if (!wordVisible) {
           const imposterIsYou = (playerIndex === imposterIndex);
@@ -436,6 +456,5 @@
       };
     }
   </script>
-
 </body>
 </html>
