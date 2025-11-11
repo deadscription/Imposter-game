@@ -435,7 +435,8 @@ newRoundBtn.onclick = async () => {
     if (playerIndex === 0) {
       // Host exits → end the whole game
       await db.ref("games/" + seed).remove();
-      await db.ref("games/currentRound").remove();
+      
+      await db.ref("games/currentRound").set(Math.floor(Math.random() * 1000000));
 
       // Notify all players (clear their view via currentRound listener)
       alert("Host exited. The game has ended.");
