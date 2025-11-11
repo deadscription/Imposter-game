@@ -427,26 +427,41 @@
 }
 
 
-        // Show Exit Game button for everyone
+       // Show Exit Game button for everyone
 newRoundBtn.style.display = "inline-block";
 newRoundBtn.textContent = "Exit Game";
 newRoundBtn.onclick = async () => {
   if (playerName && playerIndex !== null) {
     if (playerIndex === 0) {
       // Host exits → end the whole game
-      await db.ref("games/" + seed).remove();
-      
-      await db.ref("games/currentRound").set(Math.floor(Math.random() * 1000000));
+      try {
+        // 1) create a new seed and switch the global currentRound first
+        const newSeed = Math.floor(Math.random() * 1000000);
+        await db.ref("games/currentRound").set(newSeed);
 
-      // Notify all players (clear their view via currentRound listener)
-      alert("Host exited. The game has ended.");
+        // 2) small delay so clients have time to react to the new round
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // 3) remove the old game's data
+        await db.ref("games/" + seed).remove();
+
+        // 4) show a friendly in-screen message (instead of alert)
+        waitingMessage.textContent = "Host exited. The previous game ended.";
+      } catch (err) {
+        console.error("Error ending game by host:", err);
+        waitingMessage.textContent = "Failed to end game cleanly. Try again.";
+      }
     } else {
       // Non-host exits → remove only their entry
-      await playersRef.child(playerIndex).remove();
+      try {
+        await playersRef.child(playerIndex).remove();
+      } catch (err) {
+        console.error("Failed to remove player:", err);
+      }
     }
   }
 
-  // Reset UI for the current player (local reset)
+  // Reset UI for the local player (go back to home)
   nameInput.style.display = "inline-block";
   joinBtn.style.display = "inline-block";
   joinBtn.disabled = false;
@@ -457,11 +472,13 @@ newRoundBtn.onclick = async () => {
   wordBox.style.display = "none";
   revealBtn.style.display = "none";
   newRoundBtn.style.display = "none";
-  waitingMessage.textContent = "";
+  // keep waitingMessage text above for host-exit info; clear it after a few seconds
+  setTimeout(() => { waitingMessage.textContent = ""; }, 3500);
 
   categorySection.style.display = "none";
   chosenCategoryDiv.textContent = "";
 };
+
 
 
           categorySection.style.display = "block";
