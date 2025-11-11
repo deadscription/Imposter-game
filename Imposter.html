@@ -448,27 +448,42 @@
 } else if (playerName !== null && playerIndex !== null) {
   waitingMessage.textContent = "";
 
-  categoryRef.once("value").then(catSnap => {
-    const hasCategory = !!catSnap.val();
+  categoryRef.on("value", snap => {
+  const catVal = snap.val();
+  category = catVal || null;
 
-    // 🧠 Only allow reveal if there are enough players AND category is chosen
-    if (!hasCategory) {
-      if (playerIndex === 0) {
-        waitingCategoryMessage.style.display = "block";
-        waitingCategoryMessage.textContent = "Select a category to start the round.";
+  if (catVal) {
+    chosenCategoryDiv.textContent = `Category: ${catVal}`;
+
+    // Ensure we only enable Reveal when there are at least 3 players
+    playersRef.once("value").then(psnap => {
+      const playersObj = psnap.val() || {};
+      const pc = Object.keys(playersObj).length;
+
+      if (pc >= 3) {
+        waitingCategoryMessage.style.display = "none";
+        revealBtn.disabled = false;
+        revealBtn.textContent = "Reveal Word";
       } else {
+        // Not enough players yet — keep Reveal disabled and show count
         waitingCategoryMessage.style.display = "block";
-        waitingCategoryMessage.textContent = "Waiting for host to select the category...";
+        waitingCategoryMessage.textContent = `Waiting for at least 3 players... (${pc}/3)`;
+        revealBtn.disabled = true;
+        revealBtn.textContent = "Waiting for players...";
       }
-      revealBtn.disabled = true;
-      revealBtn.textContent = "Reveal Word";
-    } else if (playerCount >= 3) {
-      waitingCategoryMessage.style.display = "none";
-      revealBtn.disabled = false;
-      revealBtn.textContent = "Reveal Word";
-    }
-  });
-}
+    }).catch(err => {
+      console.error("Failed to read players count:", err);
+    });
+
+  } else {
+    // Category was cleared
+    chosenCategoryDiv.textContent = "";
+    waitingCategoryMessage.style.display = "none";
+    revealBtn.disabled = true;
+    revealBtn.textContent = "Waiting for players...";
+  }
+});
+
 
 
       // Host-only category setup
