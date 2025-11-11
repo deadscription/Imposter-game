@@ -297,13 +297,21 @@
   }
 
   function startRound(seed) {
-    const waitingCategoryMessage = document.getElementById("waitingCategoryMessage");
+  const waitingCategoryMessage = document.getElementById("waitingCategoryMessage");
 
-    const playersRef = db.ref("games/" + seed + "/players");
-    const categoryRef = db.ref("games/" + seed + "/category");
-    const imposterRef = db.ref("games/" + seed + "/imposter");
-    const wordRef = db.ref("games/" + seed + "/word");
-    const currentRoundRef = db.ref("games/currentRound");
+  const playersRef = db.ref("games/" + seed + "/players");
+  const categoryRef = db.ref("games/" + seed + "/category");
+  const imposterRef = db.ref("games/" + seed + "/imposter");
+  const wordRef = db.ref("games/" + seed + "/word");
+  const currentRoundRef = db.ref("games/currentRound");
+
+  // 👇 Add this new block right here
+  db.ref("games/" + seed).on("value", snap => {
+    if (!snap.exists()) {
+      alert("The host has ended the game.");
+      resetToHome();
+    }
+  });
 
     const nameInput = document.getElementById("nameInput");
     const joinBtn = document.getElementById("joinBtn");
