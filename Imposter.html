@@ -209,6 +209,29 @@
         max-width: 340px;
       }
     }
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+    
   </style>
 </head>
 <body>
@@ -247,6 +270,7 @@
   <div id="wordBox"></div>
 
   <button id="newRoundBtn" style="display:none;">Start New Round</button>
+  <div id="toast" class="toast"></div>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -308,7 +332,7 @@
   // 👇 Add this new block right here
   db.ref("games/" + seed).on("value", snap => {
     if (!snap.exists()) {
-      alert("The host has ended the game.");
+      showToast("The host has ended the game.");
       resetToHome();
     }
   });
@@ -511,6 +535,16 @@
         wordVisible = false;
       }
     };
+    function showToast(message) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2500);
+}
+
 
     function resetToHome() {
       playersUl.innerHTML = "";
