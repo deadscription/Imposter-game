@@ -442,26 +442,34 @@
       }
 
       if (playerCount < 3) {
-        waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
-        revealBtn.disabled = true;
-      } else if (playerName !== null && playerIndex !== null) {
-        waitingMessage.textContent = "";
-        categoryRef.once("value").then(catSnap => {
-          const hasCategory = !!catSnap.val();
-          if (!hasCategory && playerIndex !== 0) {
-            waitingCategoryMessage.style.display = "block";
-            waitingCategoryMessage.textContent = "Waiting for host to select the Category...";
-            revealBtn.disabled = true;
-            revealBtn.textContent = "Reveal Word";
-          } else {
-            waitingCategoryMessage.style.display = "none";
-            revealBtn.disabled = false;
-            if (revealBtn.textContent !== "Hide Word") {
-              revealBtn.textContent = "Reveal Word";
-            }
-          }
-        });
+  waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
+  revealBtn.disabled = true;
+  revealBtn.textContent = "Waiting for players...";
+} else if (playerName !== null && playerIndex !== null) {
+  waitingMessage.textContent = "";
+
+  categoryRef.once("value").then(catSnap => {
+    const hasCategory = !!catSnap.val();
+
+    // 🧠 Only allow reveal if there are enough players AND category is chosen
+    if (!hasCategory) {
+      if (playerIndex === 0) {
+        waitingCategoryMessage.style.display = "block";
+        waitingCategoryMessage.textContent = "Select a category to start the round.";
+      } else {
+        waitingCategoryMessage.style.display = "block";
+        waitingCategoryMessage.textContent = "Waiting for host to select the category...";
       }
+      revealBtn.disabled = true;
+      revealBtn.textContent = "Reveal Word";
+    } else if (playerCount >= 3) {
+      waitingCategoryMessage.style.display = "none";
+      revealBtn.disabled = false;
+      revealBtn.textContent = "Reveal Word";
+    }
+  });
+}
+
 
       // Host-only category setup
       if (playerIndex === 0) {
