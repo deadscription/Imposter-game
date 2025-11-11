@@ -427,12 +427,41 @@
 }
 
 
-        if (playerIndex === 0 && playerCount >= 3) {
-          newRoundBtn.style.display = "inline-block";
-          newRoundBtn.onclick = () => {
-            db.ref("games/" + seed).remove();
-            currentRoundRef.set(Math.floor(Math.random() * 1000000));
-          };
+        // Show Exit Game button for everyone
+newRoundBtn.style.display = "inline-block";
+newRoundBtn.textContent = "Exit Game";
+newRoundBtn.onclick = async () => {
+  if (playerName && playerIndex !== null) {
+    if (playerIndex === 0) {
+      // Host exits → end the whole game
+      await db.ref("games/" + seed).remove();
+      await db.ref("games/currentRound").remove();
+
+      // Notify all players (clear their view via currentRound listener)
+      alert("Host exited. The game has ended.");
+    } else {
+      // Non-host exits → remove only their entry
+      await playersRef.child(playerIndex).remove();
+    }
+  }
+
+  // Reset UI for the current player (local reset)
+  nameInput.style.display = "inline-block";
+  joinBtn.style.display = "inline-block";
+  joinBtn.disabled = false;
+  joinBtn.textContent = "Join Game";
+  nameInput.value = "";
+
+  playersListDiv.style.display = "none";
+  wordBox.style.display = "none";
+  revealBtn.style.display = "none";
+  newRoundBtn.style.display = "none";
+  waitingMessage.textContent = "";
+
+  categorySection.style.display = "none";
+  chosenCategoryDiv.textContent = "";
+};
+
 
           categorySection.style.display = "block";
           categorySelect.style.display = "inline-block";
