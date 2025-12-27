@@ -288,6 +288,8 @@
     appId: "1:727642877069:web:35f0113718fdde270b06c4"
   };
 
+  // ... (Keep your firebaseConfig and initialization)
+
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
@@ -309,205 +311,127 @@
     });
   }
 
-  async function fetchWords(category) {
-    try {
-      const res = await fetch('https://random-word-api.herokuapp.com/word?number=5');
-      if (!res.ok) throw new Error("fetch failed");
-      return await res.json();
-    } catch (e) {
-      console.warn("Word fetch failed, using static list", e);
-      return ["pizza","moon","guitar","jungle","volcano","camera","robot","beach","castle","mountain"];
-    }
-  }
+  // Define words for each category
+  const wordBank = {
+    animals: ["Lion", "Penguin", "Elephant", "Giraffe", "Hamster", "Shark"],
+    food: ["Pizza", "Sushi", "Taco", "Burger", "Pancake", "Pasta"],
+    places: ["Paris", "Jungle", "Hospital", "Space Station", "Library", "Beach"],
+    objects: ["Guitar", "Smartphone", "Telescope", "Umbrella", "Hammer", "Clock"]
+  };
 
   function startRound(seed) {
-  const waitingCategoryMessage = document.getElementById("waitingCategoryMessage");
+    const sessionRef = db.ref("games/" + seed);
+    const playersRef = sessionRef.child("players");
+    const categoryRef = sessionRef.child("category");
+    const imposterRef = sessionRef.child("imposter");
+    const wordRef = sessionRef.child("word");
 
-  const playersRef = db.ref("games/" + seed + "/players");
-  const categoryRef = db.ref("games/" + seed + "/category");
-  const imposterRef = db.ref("games/" + seed + "/imposter");
-  const wordRef = db.ref("games/" + seed + "/word");
-  const currentRoundRef = db.ref("games/currentRound");
-
-  // 👇 Add this new block right here
-  db.ref("games/" + seed).on("value", snap => {
-    if (!snap.exists()) {
-      showToast("The host has ended the game.");
-      resetToHome();
-    }
-  });
-
+    // UI Elements
     const nameInput = document.getElementById("nameInput");
     const joinBtn = document.getElementById("joinBtn");
-    const playersListDiv = document.getElementById("playersList");
     const playersUl = document.getElementById("playersUl");
-    const revealBtn = document.getElementById("revealBtn");
-    const wordBox = document.getElementById("wordBox");
-    const newRoundBtn = document.getElementById("newRoundBtn");
-    const waitingMessage = document.getElementById("waitingMessage");
+    const playersListDiv = document.getElementById("playersList");
     const categorySection = document.getElementById("categorySection");
     const categorySelect = document.getElementById("categorySelect");
     const chooseCategoryBtn = document.getElementById("chooseCategoryBtn");
     const chosenCategoryDiv = document.getElementById("chosenCategory");
-
-    // Reset UI
-    playersUl.innerHTML = "";
-    playersListDiv.style.display = "none";
-    wordBox.style.display = "none";
-    revealBtn.style.display = "none";
-    newRoundBtn.style.display = "none";
-    waitingMessage.textContent = "";
-    nameInput.style.display = "inline-block";
-    joinBtn.style.display = "inline-block";
-    joinBtn.disabled = false;
-    joinBtn.textContent = "Join Game";
-    nameInput.value = "";
-    categorySection.style.display = "none";
-    chosenCategoryDiv.textContent = "";
-    categorySelect.disabled = false;
-    chooseCategoryBtn.disabled = false;
-    categorySelect.value = "";
+    const revealBtn = document.getElementById("revealBtn");
+    const wordBox = document.getElementById("wordBox");
+    const newRoundBtn = document.getElementById("newRoundBtn");
+    const waitingCategoryMessage = document.getElementById("waitingCategoryMessage");
 
     let playerName = null;
     let playerIndex = null;
-    let wordVisible = false;
-    let category = null;
-    let chosenWord = "";
-    let imposterIndex = null;
-    const playerColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
+    let isHost = false;
 
+    // 1. JOIN LOGIC
     joinBtn.onclick = () => {
       const name = nameInput.value.trim();
       if (!name) return alert("Enter your name!");
 
       playersRef.once("value").then(snap => {
-        const players = snap.val() || {};
-        const existing = Object.values(players).map(p => p.name.toLowerCase());
-        if (existing.includes(name.toLowerCase())) return alert("Name already taken!");
-
-        playerIndex = Object.keys(players).length;
+        const players = snap.val() || [];
+        playerIndex = players.length;
         playerName = name;
-        playersRef.child(playerIndex).set({ name, color: playerColor });
+        isHost = (playerIndex === 0);
+
+        playersRef.child(playerIndex).set({ name, color: "#90caf9" });
 
         nameInput.style.display = "none";
         joinBtn.style.display = "none";
-        revealBtn.style.display = "inline-block";
-        revealBtn.disabled = true;
-        revealBtn.textContent = "Waiting for players...";
+        playersListDiv.style.display = "block";
+        
+        if (isHost) {
+          categorySection.style.display = "block";
+        } else {
+          waitingCategoryMessage.style.display = "block";
+          waitingCategoryMessage.textContent = "Waiting for host to pick a category...";
+        }
       });
     };
 
-  categoryRef.on("value", snap => {
-  const catVal = snap.val();
-  category = catVal || null;
+    // 2. CATEGORY SELECTION (Host Only)
+    chooseCategoryBtn.onclick = () => {
+      const cat = categorySelect.value;
+      if (!cat) return alert("Select a category!");
 
-  if (catVal) {
-    chosenCategoryDiv.textContent = `Category: ${catVal}`;
+      playersRef.once("value").then(snap => {
+        const players = snap.val() || [];
+        if (players.length < 3) return alert("Need at least 3 players!");
 
-    // Ensure we only enable Reveal when there are at least 3 players
-    playersRef.once("value").then(psnap => {
-      const playersObj = psnap.val() || {};
-      const pc = Object.keys(playersObj).length;
+        const randomWord = wordBank[cat][Math.floor(Math.random() * wordBank[cat].length)];
+        const randomImposter = Math.floor(Math.random() * players.length);
 
-      if (pc >= 3) {
-        waitingCategoryMessage.style.display = "none";
+        // Update Firebase
+        sessionRef.update({
+          category: cat,
+          word: randomWord,
+          imposter: randomImposter
+        });
+        
+        categorySection.style.display = "none";
+      });
+    };
+
+    // 3. SYNC PLAYER LIST
+    playersRef.on("value", snap => {
+      playersUl.innerHTML = "";
+      const players = snap.val() || [];
+      players.forEach((p, idx) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<span class="player-badge" style="background:${p.color}"></span> ${p.name} ${idx === 0 ? "(Host)" : ""}`;
+        if (p.name === playerName) li.classList.add("local-player");
+        playersUl.appendChild(li);
+      });
+    });
+
+    // 4. SYNC GAME STATE (Word & Imposter)
+    sessionRef.on("value", snap => {
+      const data = snap.val();
+      if (data && data.word && data.category) {
+        chosenCategoryDiv.textContent = "Category: " + data.category;
+        revealBtn.style.display = "inline-block";
         revealBtn.disabled = false;
         revealBtn.textContent = "Reveal Word";
-      } else {
-        // Not enough players yet — keep Reveal disabled and show count
-        waitingCategoryMessage.style.display = "block";
-        waitingCategoryMessage.textContent = `Waiting for at least 3 players... (${pc}/3)`;
-        revealBtn.disabled = true;
-        revealBtn.textContent = "Waiting for players...";
-      }
-    }).catch(err => {
-      console.error("Failed to read players count:", err);
-    });
-
-  } else {
-    // Category was cleared
-    chosenCategoryDiv.textContent = "";
-    waitingCategoryMessage.style.display = "none";
-    revealBtn.disabled = true;
-    revealBtn.textContent = "Waiting for players...";
-  }
-});
-
-playersRef.on("value", snap => {
-  console.log("Players changed:", snap.val());
-});    
-      // Show Exit Game button to all players
-      if (playerName) {
-        newRoundBtn.style.display = "inline-block";
-        newRoundBtn.textContent = "Exit Game";
-        newRoundBtn.onclick = async () => {
-          if (playerIndex === 0) {
-            // Host exits → end the game for everyone
-            await db.ref("games/" + seed).remove();
-            await currentRoundRef.set(Math.floor(Math.random() * 1000000));
-          } else {
-            // Player exits → remove only themselves
-            await playersRef.child(playerIndex).remove();
-            resetToHome();
-          }
+        waitingCategoryMessage.style.display = "none";
+        
+        // Setup Reveal Logic
+        revealBtn.onclick = () => {
+          const isImposter = (playerIndex === data.imposter);
+          wordBox.innerHTML = isImposter ? "❗ <b>You are the IMPOSTER</b>" : `🗝️ Word: <b>${data.word}</b>`;
+          wordBox.style.display = wordBox.style.display === "none" ? "block" : "none";
         };
+
+        // Show Start New Round for Host
+        if (isHost) {
+          newRoundBtn.style.display = "inline-block";
+          newRoundBtn.textContent = "Start New Round";
+          newRoundBtn.onclick = () => {
+             db.ref("games/currentRound").set(Math.floor(Math.random() * 1000000));
+          };
+        }
       }
-
-
-
-    imposterRef.on("value", snap => {
-      if (snap.exists()) imposterIndex = snap.val();
     });
-
-    wordRef.on("value", snap => {
-      if (snap.exists()) chosenWord = snap.val();
-    });
-
-    revealBtn.onclick = () => {
-      if (!playerName) return;
-      if (!category) return alert("Category not set yet!");
-      if (!wordVisible) {
-        const imposterIsYou = (playerIndex === imposterIndex);
-        wordBox.innerHTML = imposterIsYou
-          ? "❗ <b>You are the Imposter!</b>"
-          : `🗝️ Your word is: <b>${chosenWord}</b>`;
-        wordBox.style.display = "block";
-        wordBox.classList.remove("word-visible");
-        void wordBox.offsetWidth;
-        wordBox.classList.add("word-visible");
-        revealBtn.textContent = "Hide Word";
-        wordVisible = true;
-      } else {
-        wordBox.style.display = "none";
-        revealBtn.textContent = "Reveal Word";
-        wordVisible = false;
-      }
-    };
-    function showToast(message) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-  toast.textContent = message;
-  toast.classList.add("show");
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 2500);
-}
-
-
-    function resetToHome() {
-      playersUl.innerHTML = "";
-      playersListDiv.style.display = "none";
-      wordBox.style.display = "none";
-      revealBtn.style.display = "none";
-      newRoundBtn.style.display = "none";
-      waitingMessage.textContent = "";
-      waitingCategoryMessage.style.display = "none";
-      nameInput.style.display = "inline-block";
-      joinBtn.style.display = "inline-block";
-      joinBtn.disabled = false;
-      joinBtn.textContent = "Join Game";
-      nameInput.value = "";
-    }
   }
 </script>
 
