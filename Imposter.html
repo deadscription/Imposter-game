@@ -126,6 +126,10 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+      let playerName = null;
+      let playerIndex = null;
+      let isHost = false;
+
     const wordBank = {
       animals: ["Lion", "Penguin", "Elephant", "Giraffe", "Hamster", "Shark"],
       food: ["Pizza", "Sushi", "Taco", "Burger", "Pancake", "Pasta"],
@@ -143,20 +147,37 @@
 
     // 3. Main Game Logic
     function startRound(seed) {
-      // Elements
-      const joinScreen = document.getElementById("joinScreen");
-      const nameInput = document.getElementById("nameInput");
-      const joinBtn = document.getElementById("joinBtn");
-      const playersListDiv = document.getElementById("playersList");
-      const playersUl = document.getElementById("playersUl");
-      const categorySection = document.getElementById("categorySection");
-      const categorySelect = document.getElementById("categorySelect");
-      const chooseCategoryBtn = document.getElementById("chooseCategoryBtn");
-      const chosenCategoryDiv = document.getElementById("chosenCategory");
-      const revealBtn = document.getElementById("revealBtn");
-      const wordBox = document.getElementById("wordBox");
-      const newRoundBtn = document.getElementById("newRoundBtn");
-      const waitingCategoryMessage = document.getElementById("waitingCategoryMessage");
+  // 1. Reset UI to 'Join' state
+  document.getElementById("joinScreen").style.display = "block";
+  document.getElementById("playersList").style.display = "none";
+  document.getElementById("categorySection").style.display = "none";
+  document.getElementById("revealBtn").style.display = "none";
+  document.getElementById("wordBox").style.display = "none";
+  document.getElementById("newRoundBtn").style.display = "none";
+  document.getElementById("waitingCategoryMessage").textContent = "";
+  document.getElementById("chosenCategory").textContent = "";
+  
+  // 2. Clear the players list visually
+  document.getElementById("playersUl").innerHTML = "";
+
+  // 3. Point to the new database location
+  const sessionRef = db.ref("games/" + seed);
+  const playersRef = sessionRef.child("players");
+  
+  // Elements
+  const joinScreen = document.getElementById("joinScreen");
+  const nameInput = document.getElementById("nameInput");
+  const joinBtn = document.getElementById("joinBtn");
+  const playersListDiv = document.getElementById("playersList");
+  const playersUl = document.getElementById("playersUl");
+  const categorySection = document.getElementById("categorySection");
+  const categorySelect = document.getElementById("categorySelect");
+  const chooseCategoryBtn = document.getElementById("chooseCategoryBtn");
+  const chosenCategoryDiv = document.getElementById("chosenCategory");
+  const revealBtn = document.getElementById("revealBtn");
+  const wordBox = document.getElementById("wordBox");
+  const newRoundBtn = document.getElementById("newRoundBtn");
+  const waitingCategoryMessage = document.getElementById("waitingCategoryMessage");
 
       // STEP 1: RESET UI FOR EVERYONE ON NEW ROUND
       joinScreen.style.display = "block";
@@ -172,33 +193,35 @@
       const sessionRef = db.ref("games/" + seed);
       const playersRef = sessionRef.child("players");
       
-      let playerName = null;
-      let playerIndex = null;
-      let isHost = false;
 
       // STEP 2: JOIN LOGIC
-      joinBtn.onclick = () => {
-        const name = nameInput.value.trim();
-        if (!name) return alert("Enter name");
+document.getElementById("joinBtn").onclick = () => {
+    const name = document.getElementById("nameInput").value.trim();
+    if (!name) return alert("Enter a name!");
 
-        playersRef.once("value").then(snap => {
-          const players = snap.val() || [];
-          playerIndex = players.length;
-          playerName = name;
-          isHost = (playerIndex === 0);
+    // This safely adds you to the player list even if others join at the same time
+    playersRef.transaction((currentData) => {
+      if (currentData === null) return [{ name: name, color: "#90caf9" }];
+      currentData.push({ name: name, color: "#90caf9" });
+      return currentData;
+    }, (error, committed, snapshot) => {
+      if (committed) {
+        const players = snapshot.val();
+        playerIndex = players.length - 1; // Your ID in this round
+        playerName = name;
+        isHost = (playerIndex === 0); // Are you the first one?
 
-          playersRef.child(playerIndex).set({ name, color: "#90caf9" });
-
-          joinScreen.style.display = "none";
-          playersListDiv.style.display = "block";
-          
-          if (isHost) {
-            categorySection.style.display = "block";
-          } else {
-            waitingCategoryMessage.textContent = "Waiting for host to pick a category...";
-          }
-        });
-      };
+        document.getElementById("joinScreen").style.display = "none";
+        document.getElementById("playersList").style.display = "block";
+        
+        if (isHost) {
+          document.getElementById("categorySection").style.display = "block";
+        } else {
+          document.getElementById("waitingCategoryMessage").textContent = "Waiting for host to pick a category";
+        }
+      }
+    });
+  };
 
       // STEP 3: HOST PICKS CATEGORY
       chooseCategoryBtn.onclick = () => {
@@ -235,7 +258,7 @@
         const data = snap.val();
         if (data && data.category && playerName) {
           waitingCategoryMessage.textContent = "";
-          chosenCategoryDiv.textContent = "Category: " + data.category.toUpperCase();
+          chosenCategoryDiv.textContent = "Word Category is: " + data.category.toUpperCase();
           revealBtn.style.display = "inline-block";
           
           if (isHost) {
