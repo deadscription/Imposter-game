@@ -433,6 +433,9 @@
   }
 });
 
+playersRef.on("value", snap => {
+  console.log("Players changed:", snap.val());
+});    
       // Show Exit Game button to all players
       if (playerName) {
         newRoundBtn.style.display = "inline-block";
