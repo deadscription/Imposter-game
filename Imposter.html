@@ -181,32 +181,54 @@
       playersUl.innerHTML = "";
 
       // JOIN LOGIC
-      joinBtn.onclick = () => {
-        const name = nameInput.value.trim();
-        if (!name) return alert("Enter a name!");
+      // Update only this part inside startRound(seed)
+    
+    joinBtn.onclick = () => {
+      const name = nameInput.value.trim();
+      if (!name) return alert("Enter a name!");
+
+      // Disable button to prevent double-clicks
+      joinBtn.disabled = true;
+      joinBtn.textContent = "Joining...";
+
+      // 1. Get current players to determine index
+      playersRef.once("value").then(snap => {
+        let players = snap.val();
+        
+        // Handle empty player list (first player)
+        if (!players) {
+          players = [];
+        } else if (!Array.isArray(players)) {
+          // If Firebase saved it as an object instead of array, convert it
+          players = Object.values(players);
+        }
+
+        playerIndex = players.length;
         playerName = name;
+        isHost = (playerIndex === 0);
 
-        playersRef.transaction((currentData) => {
-          if (currentData === null) return [{ name: name, color: "#90caf9" }];
-          currentData.push({ name: name, color: "#90caf9" });
-          return currentData;
-        }, (error, committed, snapshot) => {
-          if (committed) {
-            const players = snapshot.val();
-            playerIndex = players.length - 1;
-            isHost = (playerIndex === 0);
-
-            joinScreen.style.display = "none";
-            playersListDiv.style.display = "block";
-            
-            if (isHost) {
-              categorySection.style.display = "block";
-            } else {
-              waitingCategoryMessage.textContent = "Waiting for host to pick a category...";
-            }
-          }
+        // 2. Save player to Firebase
+        return playersRef.child(playerIndex).set({ 
+          name: name, 
+          color: "#90caf9" 
         });
-      };
+      }).then(() => {
+        // 3. Update UI on success
+        joinScreen.style.display = "none";
+        playersListDiv.style.display = "block";
+        
+        if (isHost) {
+          categorySection.style.display = "block";
+        } else {
+          waitingCategoryMessage.textContent = "Waiting for host to pick a category...";
+        }
+      }).catch(err => {
+        console.error("Join Error:", err);
+        alert("Failed to join: " + err.message);
+        joinBtn.disabled = false;
+        joinBtn.textContent = "Join Game";
+      });
+    };
 
       // HOST LOGIC
       chooseCategoryBtn.onclick = () => {
