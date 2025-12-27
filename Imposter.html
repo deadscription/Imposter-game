@@ -147,55 +147,40 @@
 
     // 3. Main Game Logic
     function startRound(seed) {
-  // 1. Reset UI to 'Join' state
-  document.getElementById("joinScreen").style.display = "block";
-  document.getElementById("playersList").style.display = "none";
-  document.getElementById("categorySection").style.display = "none";
-  document.getElementById("revealBtn").style.display = "none";
-  document.getElementById("wordBox").style.display = "none";
-  document.getElementById("newRoundBtn").style.display = "none";
-  document.getElementById("waitingCategoryMessage").textContent = "";
-  document.getElementById("chosenCategory").textContent = "";
-  
-  // 2. Clear the players list visually
-  document.getElementById("playersUl").innerHTML = "";
+// 1. Declare all variables and select elements (ONCE)
+    const joinScreen = document.getElementById("joinScreen");
+    const nameInput = document.getElementById("nameInput");
+    const joinBtn = document.getElementById("joinBtn");
+    const playersListDiv = document.getElementById("playersList");
+    const playersUl = document.getElementById("playersUl");
+    const categorySection = document.getElementById("categorySection");
+    const categorySelect = document.getElementById("categorySelect");
+    const chooseCategoryBtn = document.getElementById("chooseCategoryBtn");
+    const chosenCategoryDiv = document.getElementById("chosenCategory");
+    const revealBtn = document.getElementById("revealBtn");
+    const wordBox = document.getElementById("wordBox");
+    const newRoundBtn = document.getElementById("newRoundBtn");
+    const waitingCategoryMessage = document.getElementById("waitingCategoryMessage");
 
-  // 3. Point to the new database location
-  const sessionRef = db.ref("games/" + seed);
-  const playersRef = sessionRef.child("players");
-  
-  // Elements
-  const joinScreen = document.getElementById("joinScreen");
-  const nameInput = document.getElementById("nameInput");
-  const joinBtn = document.getElementById("joinBtn");
-  const playersListDiv = document.getElementById("playersList");
-  const playersUl = document.getElementById("playersUl");
-  const categorySection = document.getElementById("categorySection");
-  const categorySelect = document.getElementById("categorySelect");
-  const chooseCategoryBtn = document.getElementById("chooseCategoryBtn");
-  const chosenCategoryDiv = document.getElementById("chosenCategory");
-  const revealBtn = document.getElementById("revealBtn");
-  const wordBox = document.getElementById("wordBox");
-  const newRoundBtn = document.getElementById("newRoundBtn");
-  const waitingCategoryMessage = document.getElementById("waitingCategoryMessage");
+    const sessionRef = db.ref("games/" + seed);
+    const playersRef = sessionRef.child("players");
 
-      // STEP 1: RESET UI FOR EVERYONE ON NEW ROUND
-      joinScreen.style.display = "block";
-      playersListDiv.style.display = "none";
-      categorySection.style.display = "none";
-      revealBtn.style.display = "none";
-      wordBox.style.display = "none";
-      newRoundBtn.style.display = "none";
-      waitingCategoryMessage.textContent = "";
-      chosenCategoryDiv.textContent = "";
-      playersUl.innerHTML = "";
+    // 2. RESET UI (The "Wipe" logic)
+    // This uses the variables we just created above
+    joinScreen.style.display = "block";
+    playersListDiv.style.display = "none";
+    categorySection.style.display = "none";
+    revealBtn.style.display = "none";
+    wordBox.style.display = "none";
+    newRoundBtn.style.display = "none";
+    waitingCategoryMessage.textContent = "";
+    chosenCategoryDiv.textContent = "";
+    playersUl.innerHTML = "";
+    nameInput.value = "";
 
-      const sessionRef = db.ref("games/" + seed);
-      const playersRef = sessionRef.child("players");
       
-
       // STEP 2: JOIN LOGIC
-document.getElementById("joinBtn").onclick = () => {
+    document.getElementById("joinBtn").onclick = () => {
     const name = document.getElementById("nameInput").value.trim();
     if (!name) return alert("Enter a name!");
 
