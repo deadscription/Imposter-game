@@ -254,19 +254,23 @@ document.getElementById("joinBtn").onclick = () => {
       });
 
       // STEP 5: LISTEN FOR GAME DATA
-      sessionRef.on("value", snap => {
-        const data = snap.val();
-        if (data && data.category && playerName) {
-          waitingCategoryMessage.textContent = "";
-          chosenCategoryDiv.textContent = "Word Category is: " + data.category.toUpperCase();
-          revealBtn.style.display = "inline-block";
-          
-          if (isHost) {
-            newRoundBtn.style.display = "inline-block";
-            newRoundBtn.onclick = () => {
-              db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
-            };
-          }
+    sessionRef.on("value", snap => {
+  const data = snap.val();
+  if (data && data.category && playerName) {
+    // Show the category name to everyone
+    document.getElementById("chosenCategory").textContent = "Category: " + data.category;
+    document.getElementById("revealBtn").style.display = "inline-block";
+
+    if (isHost) {
+      const resetBtn = document.getElementById("newRoundBtn");
+      resetBtn.style.display = "inline-block";
+      resetBtn.onclick = () => {
+        // Changing 'currentRound' triggers startRound() for every player on the site
+        db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
+      };
+    }
+    
+    // ... (Keep your Reveal Word logic here)
 
           revealBtn.onclick = () => {
             const isImposter = (playerIndex === data.imposter);
