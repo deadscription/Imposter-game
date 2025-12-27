@@ -457,42 +457,6 @@
 } else if (playerName !== null && playerIndex !== null) {
   waitingMessage.textContent = "";
 
-  categoryRef.on("value", snap => {
-  const catVal = snap.val();
-  category = catVal || null;
-
-  if (catVal) {
-    chosenCategoryDiv.textContent = `Category: ${catVal}`;
-
-    // Ensure we only enable Reveal when there are at least 3 players
-    playersRef.once("value").then(psnap => {
-      const playersObj = psnap.val() || {};
-      const pc = Object.keys(playersObj).length;
-
-      if (pc >= 3) {
-        waitingCategoryMessage.style.display = "none";
-        revealBtn.disabled = false;
-        revealBtn.textContent = "Reveal Word";
-      } else {
-        // Not enough players yet — keep Reveal disabled and show count
-        waitingCategoryMessage.style.display = "block";
-        waitingCategoryMessage.textContent = `Waiting for at least 3 players... (${pc}/3)`;
-        revealBtn.disabled = true;
-        revealBtn.textContent = "Waiting for players...";
-      }
-    }).catch(err => {
-      console.error("Failed to read players count:", err);
-    });
-
-  } else {
-    // Category was cleared
-    chosenCategoryDiv.textContent = "";
-    waitingCategoryMessage.style.display = "none";
-    revealBtn.disabled = true;
-    revealBtn.textContent = "Waiting for players...";
-  }
-});
-
 
 
       // Host-only category setup
@@ -528,16 +492,6 @@
       }
     });
 
-    categoryRef.on("value", snap => {
-      const catVal = snap.val();
-      if (catVal) {
-        waitingCategoryMessage.style.display = "none";
-        revealBtn.disabled = false;
-        revealBtn.textContent = "Reveal Word";
-        category = catVal;
-        chosenCategoryDiv.textContent = `Category: ${catVal}`;
-      }
-    });
 
     imposterRef.on("value", snap => {
       if (snap.exists()) imposterIndex = snap.val();
