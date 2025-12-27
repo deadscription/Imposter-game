@@ -320,6 +320,29 @@
   };
 
   function startRound(seed) {
+  // 1. Find all UI elements
+    const nameInput = document.getElementById("nameInput");
+    const joinBtn = document.getElementById("joinBtn");
+    const playersListDiv = document.getElementById("playersList");
+    const categorySection = document.getElementById("categorySection");
+    const revealBtn = document.getElementById("revealBtn");
+    const wordBox = document.getElementById("wordBox");
+    const newRoundBtn = document.getElementById("newRoundBtn");
+    const waitingCategoryMessage = document.getElementById("waitingCategoryMessage");
+    const chosenCategoryDiv = document.getElementById("chosenCategory");
+
+    // 2. RESET EVERYTHING immediately when a new seed is detected
+    nameInput.style.display = "inline-block";
+    joinBtn.style.display = "inline-block";
+    playersListDiv.style.display = "none";
+    categorySection.style.display = "none";
+    revealBtn.style.display = "none";
+    wordBox.style.display = "none";
+    newRoundBtn.style.display = "none";
+    waitingCategoryMessage.style.display = "none";
+    chosenCategoryDiv.textContent = "";
+    nameInput.value = "";
+    
     const sessionRef = db.ref("games/" + seed);
     const playersRef = sessionRef.child("players");
     const categoryRef = sessionRef.child("category");
@@ -408,27 +431,37 @@
     // 4. SYNC GAME STATE (Word & Imposter)
     sessionRef.on("value", snap => {
       const data = snap.val();
-      if (data && data.word && data.category) {
-        chosenCategoryDiv.textContent = "Category: " + data.category;
-        revealBtn.style.display = "inline-block";
-        revealBtn.disabled = false;
-        revealBtn.textContent = "Reveal Word";
-        waitingCategoryMessage.style.display = "none";
-        
-        // Setup Reveal Logic
-        revealBtn.onclick = () => {
-          const isImposter = (playerIndex === data.imposter);
-          wordBox.innerHTML = isImposter ? "❗ <b>You are the IMPOSTER</b>" : `🗝️ Word: <b>${data.word}</b>`;
-          wordBox.style.display = wordBox.style.display === "none" ? "block" : "none";
-        };
+      if (!data) return;
 
-        // Show Start New Round for Host
-        if (isHost) {
-          newRoundBtn.style.display = "inline-block";
-          newRoundBtn.textContent = "Start New Round";
-          newRoundBtn.onclick = () => {
-             db.ref("games/currentRound").set(Math.floor(Math.random() * 1000000));
-          };
+      // If a category has been picked in Firebase...
+      if (data.category) {
+        chosenCategoryDiv.textContent = "Category: " + data.category;
+        waitingCategoryMessage.style.display = "none"; // Hide the "Waiting..." text
+        
+        // If this specific user has joined, show the Reveal button
+        if (playerName) {
+          revealBtn.style.display = "inline-block";
+
+          revealBtn.onclick = () => {
+        const isImposter = (playerIndex === data.imposter);
+        if (wordBox.style.display === "none") {
+          wordBox.innerHTML = isImposter ? "❗ <b>You are the IMPOSTER</b>" : `🗝️ Word: <b>${data.word}</b>`;
+          wordBox.style.display = "block";
+          revealBtn.textContent = "Hide Word";
+        } else {
+          wordBox.style.display = "none";
+          revealBtn.textContent = "Reveal Word";
+        }
+      };
+          
+          // Only the Host sees the "New Round" button to reset the game
+          if (isHost) {
+            newRoundBtn.style.display = "inline-block";
+            newRoundBtn.onclick = () => {
+              // This line changes the "Seed" for everyone, triggering Step 1
+              db.ref("games/currentRound").set(Math.floor(Math.random() * 1000000));
+            };
+          }
         }
       }
     });
