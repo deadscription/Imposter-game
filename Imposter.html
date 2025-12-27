@@ -104,7 +104,8 @@
     <button id="revealBtn" style="display:none;">Reveal Word</button>
     <div id="wordBox" style="display:none;"></div>
     <br>
-    <button id="newRoundBtn" style="display:none;">Next Round (Reset Everyone)</button>
+    <button id="newRoundBtn" style="display:none;">Start New Round</button>
+    <button id="exitGameBtn" style="display:none; background:#d32f2f;">Exit Game (Reset All)</button>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -245,31 +246,74 @@
       });
 
       sessionRef.on("value", snap => {
-        const data = snap.val();
-        if (data && data.category && playerName) {
-          document.getElementById("waitingCategoryMessage").textContent = "";
-          document.getElementById("chosenCategory").textContent = "Category: " + data.category.toUpperCase();
-          document.getElementById("revealBtn").style.display = "inline-block";
-          if (isHost) document.getElementById("newRoundBtn").style.display = "inline-block";
-          document.getElementById("categorySection").style.display = "none";
+  const data = snap.val();
+  
+  // 1. If host clicked 'Exit Game' (Seed data deleted)
+  if (!snap.exists()) {
+    playerName = null; // Reset local state
+    playerIndex = null;
+    isHost = false;
+    resetGameUI(); 
+    return;
+  }
 
-          document.getElementById("revealBtn").onclick = () => {
-            const wordBox = document.getElementById("wordBox");
-            const revealBtn = document.getElementById("revealBtn");
-            const isImposter = (playerIndex == data.imposter);
-
-            if (wordBox.style.display === "none") {
-              wordBox.innerHTML = isImposter ? "❗ You are the <b>IMPOSTER</b>" : `🗝️ Word: <b>${data.word}</b>`;
-              wordBox.style.display = "block";
-              revealBtn.textContent = "Hide Word";
-            } else {
-              wordBox.style.display = "none";
-              revealBtn.textContent = "Reveal Word";
-            }
-          };
-        }
-      });
+  // 2. If host clicked 'Start New Round' (Category/Word wiped but Seed exists)
+  if (data && !data.category) {
+    document.getElementById("revealBtn").style.display = "none";
+    document.getElementById("wordBox").style.display = "none";
+    document.getElementById("chosenCategory").textContent = "";
+    document.getElementById("waitingCategoryMessage").textContent = isHost ? "" : "Waiting for host to pick a category...";
+    
+    if (isHost) {
+      document.getElementById("categorySection").style.display = "block";
+      document.getElementById("newRoundBtn").style.display = "none";
     }
+    return;
+  }
+
+  // 3. Game is Active (Category exists)
+  if (data && data.category && playerName) {
+    document.getElementById("waitingCategoryMessage").textContent = "";
+    document.getElementById("chosenCategory").textContent = "Category: " + data.category.toUpperCase();
+    document.getElementById("revealBtn").style.display = "inline-block";
+    
+    if (isHost) {
+      document.getElementById("categorySection").style.display = "none";
+      
+      // Setup "Start New Round"
+      const nextBtn = document.getElementById("newRoundBtn");
+      nextBtn.style.display = "inline-block";
+      nextBtn.onclick = () => {
+        sessionRef.update({ category: null, word: null, imposter: null });
+      };
+
+      // Setup "Exit Game"
+      const exitBtn = document.getElementById("exitGameBtn");
+      exitBtn.style.display = "inline-block";
+      exitBtn.onclick = () => {
+        // Delete the current game and change the global seed
+        sessionRef.remove().then(() => {
+          db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
+        });
+      };
+    }
+
+    // Reveal Logic
+    document.getElementById("revealBtn").onclick = () => {
+      const wordBox = document.getElementById("wordBox");
+      const isImposter = (playerIndex == data.imposter);
+      if (wordBox.style.display === "none") {
+        wordBox.innerHTML = isImposter ? "❗ You are the <b>IMPOSTER</b>" : `🗝️ Word: <b>${data.word}</b>`;
+        wordBox.style.display = "block";
+        document.getElementById("revealBtn").textContent = "Hide Word";
+      } else {
+        wordBox.style.display = "none";
+        document.getElementById("revealBtn").textContent = "Reveal Word";
+      }
+    };
+  }
+ });
+}
 </script>
 </body>
 </html>
