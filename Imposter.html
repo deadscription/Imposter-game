@@ -450,47 +450,6 @@
         };
       }
 
-      if (playerCount < 3) {
-  waitingMessage.textContent = `Waiting for at least 3 players... (${playerCount}/3)`;
-  revealBtn.disabled = true;
-  revealBtn.textContent = "Waiting for players...";
-} else if (playerName !== null && playerIndex !== null) {
-  waitingMessage.textContent = "";
-
-
-
-      // Host-only category setup
-      if (playerIndex === 0) {
-        categorySection.style.display = "block";
-        categorySelect.style.display = "inline-block";
-        chooseCategoryBtn.style.display = "inline-block";
-        chosenCategoryDiv.textContent = "";
-
-        chooseCategoryBtn.onclick = async () => {
-          const sel = categorySelect.value;
-          if (!sel) return alert("Please select a category");
-          categoryRef.set(sel);
-          category = sel;
-          chosenCategoryDiv.textContent = `Selected: ${sel}`;
-          categorySelect.disabled = true;
-          chooseCategoryBtn.disabled = true;
-
-          const words = await fetchWords(sel);
-          const seededRandom = s => (Math.sin(s++) * 10000) % 1;
-          const wordIndex = Math.floor(Math.abs(seededRandom(seed)) * words.length);
-          const chosen = words[wordIndex];
-          const playersSnap = await playersRef.once("value");
-          const count = playersSnap.exists() ? Object.keys(playersSnap.val()).length : 0;
-          const imposter = Math.floor(Math.abs(seededRandom(seed * 7)) * count);
-          wordRef.set(chosen);
-          imposterRef.set(imposter);
-        };
-      } else {
-        categorySection.style.display = "block";
-        categorySelect.style.display = "none";
-        chooseCategoryBtn.style.display = "none";
-      }
-    });
 
 
     imposterRef.on("value", snap => {
