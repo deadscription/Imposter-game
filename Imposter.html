@@ -112,7 +112,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-    // 1. Firebase Configuration (Kept your exact details)
+   // 1. Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
       authDomain: "imposter-game-515d8.firebaseapp.com",
@@ -139,18 +139,47 @@
       objects: ["Guitar", "Smartphone", "Telescope", "Umbrella", "Hammer", "Clock"]
     };
 
-    // --- BUTTON LISTENERS (Defined ONCE outside startRound) ---
+    // --- GAME INITIALIZATION ---
+    firebase.auth().signInAnonymously().then(() => {
+      console.log("Authenticated!");
+      
+      const roundRef = db.ref("games/currentRound");
 
+      // Check if a round exists, if not, create one
+      roundRef.once("value").then(snap => {
+        if (!snap.exists()) {
+          console.log("No round found, creating seed...");
+          roundRef.set(Math.floor(Math.random() * 999999));
+        }
+      });
+
+      // Listen for the Round ID
+      roundRef.on("value", snapshot => {
+        const seed = snapshot.val();
+        if (seed) {
+          console.log("Active Seed:", seed);
+          currentSeed = seed;
+          resetGameUI();
+          attachFirebaseListeners(seed);
+        }
+      });
+    }).catch(err => console.error("Auth Error:", err));
+
+    // --- BUTTON LISTENERS ---
     document.getElementById("joinBtn").onclick = function() {
-      const nameInput = document.getElementById("nameInput");
-      const name = nameInput.value.trim();
-      if (!name || !currentSeed) return alert("Please wait or enter a valid name.");
+      const name = document.getElementById("nameInput").value.trim();
+      
+      if (!name) return alert("Please enter a name.");
+      if (!currentSeed) return alert("Still connecting to server... please try again in a second.");
 
       const playersRef = db.ref("games/" + currentSeed + "/players");
 
       playersRef.once("value").then(snap => {
         const players = snap.val() || [];
-        playerIndex = Array.isArray(players) ? players.length : Object.keys(players).length;
+        // Ensure we handle both Array and Object formats from Firebase
+        const playerList = Array.isArray(players) ? players : Object.values(players);
+        
+        playerIndex = playerList.length;
         playerName = name;
         isHost = (playerIndex === 0);
 
@@ -169,10 +198,10 @@
       
       sessionRef.child("players").once("value").then(snap => {
         const players = snap.val() || [];
-        const pCount = Array.isArray(players) ? players.length : Object.keys(players).length;
+        const playerList = Array.isArray(players) ? players : Object.values(players);
         
         const randomWord = wordBank[cat][Math.floor(Math.random() * wordBank[cat].length)];
-        const randomImposter = Math.floor(Math.random() * pCount);
+        const randomImposter = Math.floor(Math.random() * playerList.length);
 
         sessionRef.update({
           category: cat,
@@ -187,24 +216,10 @@
       db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
     };
 
-    // --- GAME LOGIC ---
-
-    firebase.auth().signInAnonymously().then(() => {
-      db.ref("games/currentRound").on("value", snapshot => {
-        const seed = snapshot.val();
-        if (seed) {
-          currentSeed = seed;
-          resetGameUI();
-          attachFirebaseListeners(seed);
-        }
-      });
-    });
-
+    // --- UI & FIREBASE SYNC ---
     function resetGameUI() {
-      // If player already joined once, don't show join screen again
       document.getElementById("joinScreen").style.display = playerName ? "none" : "block";
       document.getElementById("playersList").style.display = playerName ? "block" : "none";
-      
       document.getElementById("categorySection").style.display = (playerName && isHost) ? "block" : "none";
       document.getElementById("revealBtn").style.display = "none";
       document.getElementById("wordBox").style.display = "none";
@@ -217,20 +232,18 @@
     function attachFirebaseListeners(seed) {
       const sessionRef = db.ref("games/" + seed);
       
-      // Sync Players
       sessionRef.child("players").on("value", snap => {
         const playersUl = document.getElementById("playersUl");
         playersUl.innerHTML = "";
         const players = snap.val() || [];
         Object.values(players).forEach((p, idx) => {
           const li = document.createElement("li");
-          if (p.name === playerName) li.className = "local-player";
+          if (p.name === playerName && idx === playerIndex) li.className = "local-player";
           li.innerHTML = `<span class="player-badge" style="background:${p.color}"></span> ${p.name} ${idx === 0 ? "👑" : ""}`;
           playersUl.appendChild(li);
         });
       });
 
-      // Sync Game State
       sessionRef.on("value", snap => {
         const data = snap.val();
         if (data && data.category && playerName) {
@@ -257,6 +270,6 @@
         }
       });
     }
-  </script>
+</script>
 </body>
 </html>
