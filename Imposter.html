@@ -397,7 +397,7 @@
       });
     };
 
-    categoryRef.on("value", snap => {
+  categoryRef.on("value", snap => {
   const catVal = snap.val();
   category = catVal || null;
 
@@ -423,6 +423,16 @@
     }).catch(err => {
       console.error("Failed to read players count:", err);
     });
+
+  } else {
+    // Category was cleared
+    chosenCategoryDiv.textContent = "";
+    waitingCategoryMessage.style.display = "none";
+    revealBtn.disabled = true;
+    revealBtn.textContent = "Waiting for players...";
+  }
+});
+
 
   } else {
     // Category was cleared
