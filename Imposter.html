@@ -219,16 +219,25 @@
 
     // --- UI & FIREBASE SYNC ---
     function resetGameUI() {
-      document.getElementById("joinScreen").style.display = playerName ? "none" : "block";
-      document.getElementById("playersList").style.display = playerName ? "block" : "none";
-      document.getElementById("categorySection").style.display = (playerName && isHost) ? "block" : "none";
-      document.getElementById("revealBtn").style.display = "none";
-      document.getElementById("wordBox").style.display = "none";
-      document.getElementById("newRoundBtn").style.display = "none";
-      document.getElementById("chosenCategory").textContent = "";
-      document.getElementById("waitingCategoryMessage").textContent = playerName ? "Waiting for host..." : "";
-      document.getElementById("playersUl").innerHTML = "";
-    }
+  // Hide everything by default
+  document.getElementById("joinScreen").style.display = playerName ? "none" : "block";
+  document.getElementById("playersList").style.display = playerName ? "block" : "none";
+  
+  // Explicitly hide host buttons
+  document.getElementById("categorySection").style.display = "none";
+  document.getElementById("newRoundBtn").style.display = "none";
+  document.getElementById("exitGameBtn").style.display = "none";
+  
+  // Clear text and other UI
+  document.getElementById("revealBtn").style.display = "none";
+  document.getElementById("wordBox").style.display = "none";
+  document.getElementById("chosenCategory").textContent = "";
+  document.getElementById("waitingCategoryMessage").textContent = "";
+  document.getElementById("playersUl").innerHTML = "";
+  
+  // Reset input
+  document.getElementById("nameInput").value = "";
+}
 
     function attachFirebaseListeners(seed) {
       const sessionRef = db.ref("games/" + seed);
@@ -290,12 +299,26 @@
       // Setup "Exit Game"
       const exitBtn = document.getElementById("exitGameBtn");
       exitBtn.style.display = "inline-block";
-      exitBtn.onclick = () => {
-        // Delete the current game and change the global seed
-        sessionRef.remove().then(() => {
-          db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
-        });
-      };
+    exitBtn.onclick = () => {
+  if (!confirm("This will end the game for everyone. Continue?")) return;
+
+  // 1. Kill the listeners so they don't react to the deletion
+  sessionRef.off(); 
+  playersRef.off();
+
+  // 2. Remove the current game data
+  sessionRef.remove().then(() => {
+    // 3. Update the global round pointer to a new ID
+    return db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
+  }).then(() => {
+    // 4. Force a local reset of everything
+    playerName = null;
+    playerIndex = null;
+    isHost = false;
+    resetGameUI();
+    location.reload(); // Optional: Refresh the page to ensure a totally clean state
+  });
+};
     }
 
     // Reveal Logic
