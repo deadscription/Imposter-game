@@ -152,17 +152,51 @@
 
     let playerName = null, playerIndex = null, isHost = false, currentSeed = null;
 
-    const categories = {
-      animals: ["Lion", "Tiger", "Elephant"], colors: ["Red", "Blue", "Yellow"], countries: ["USA", "Japan", "France"],
-      kitchen_utensils: ["Spoon", "Fork", "Knife"], clothing: ["Shirt", "Pants", "Hat"], household_appliances: ["Fridge", "Microwave"],
-      footwear: ["Sneakers", "Boots"], landmarks: ["Eiffel Tower", "Pyramids"], weather: ["Rain", "Snow"], trees: ["Oak", "Palm"],
-      insects: ["Bee", "Ant"], fruits_veg: ["Apple", "Banana"], desserts: ["Cake", "Cookie"], breakfast: ["Eggs", "Pancakes"],
-      olympic_sports: ["Soccer", "Swimming"], musical_instruments: ["Piano", "Guitar"], art_supplies: ["Paint", "Brush"],
-      board_games: ["Chess", "Monopoly"], space: ["Moon", "Sun"], vehicles: ["Car", "Bus"], car_parts: ["Wheel", "Engine"],
-      occupations: ["Doctor", "Teacher"], superpowers: ["Flight", "Invisibility"], characters: ["Batman", "Mickey Mouse"],
-      mythical: ["Dragon", "Unicorn"], body_parts: ["Eye", "Hand"], shapes: ["Circle", "Square"], flowers: ["Rose", "Tulip"],
-      school_subjects: ["Math", "Science"], activities: ["Running", "Cooking"]
-    };
+  const categories = {
+  // Basics
+  animals: ["Lion", "Tiger", "Elephant", "Giraffe", "Penguin", "Kangaroo"],
+  colors: ["Crimson", "Turquoise", "Lavender", "Emerald", "Magenta", "Gold"],
+  countries: ["Japan", "Brazil", "Egypt", "Canada", "Italy", "Australia"],
+  
+  // Lifestyle
+  kitchen_utensils: ["Whisk", "Spatula", "Grater", "Ladle", "Peeler", "Tongs"],
+  clothing: ["Scarf", "Mittens", "Belt", "Jacket", "Sweater", "Apron"],
+  household_appliances: ["Toaster", "Blender", "Vacuum", "Kettle", "Mixer", "Fridge"],
+  footwear: ["Slipper", "High Heel", "Cleat", "Sandal", "Boot", "Sneaker"],
+
+  // Nature
+  landmarks: ["Eiffel Tower", "Pyramids", "Colosseum", "Big Ben", "Taj Mahal"],
+  weather: ["Blizzard", "Tornado", "Rainbow", "Hurricane", "Thunder", "Fog"],
+  trees: ["Palm", "Pine", "Willow", "Oak", "Maple", "Banyan"],
+  insects: ["Butterfly", "Mosquito", "Grasshopper", "Beetle", "Ladybug", "Moth"],
+
+  // Food
+  fruits_veg: ["Pineapple", "Broccoli", "Pumpkin", "Garlic", "Coconut", "Corn"],
+  desserts: ["Cheesecake", "Brownie", "Macaron", "Pudding", "Sorbet", "Muffin"],
+  breakfast: ["Omelette", "Waffle", "Bagel", "Pancakes", "Muesli", "Smoothie"],
+
+  // Hobbies
+  olympic_sports: ["Archery", "Fencing", "Gymnastics", "Karate", "Sailing", "Judo"],
+  musical_instruments: ["Saxophone", "Cello", "Harmonica", "Trumpet", "Harp", "Drums"],
+  art_supplies: ["Canvas", "Charcoal", "Easel", "Pastel", "Palette", "Crayons"],
+  board_games: ["Chess", "Monopoly", "Scrabble", "Dominoes", "Checkers", "Clue"],
+
+  // Science/Tech
+  space: ["Asteroid", "Comet", "Satellite", "Galaxy", "Telescope", "Rocket"],
+  vehicles: ["Helicopter", "Submarine", "Tractor", "Scooter", "Bicycle", "Truck"],
+  car_parts: ["Windshield", "Engine", "Steering Wheel", "Headlight", "Bumper"],
+
+  // Jobs/Misc
+  occupations: ["Firefighter", "Astronaut", "Librarian", "Farmer", "Baker", "Judge"],
+  superpowers: ["Invisibility", "Teleportation", "Flight", "Strength", "Healing"],
+  fictional_characters: ["Batman", "Sherlock", "Harry Potter", "Spider-Man", "Yoda"],
+  mythical_creatures: ["Dragon", "Unicorn", "Phoenix", "Mermaid", "Centaur", "Ghost"],
+  body_parts: ["Elbow", "Kidney", "Eyebrow", "Shoulder", "Ankle", "Knuckle"],
+  shapes: ["Octagon", "Cylinder", "Pyramid", "Diamond", "Sphere", "Oval"],
+  flowers: ["Sunflower", "Tulip", "Orchid", "Daisy", "Rose", "Lavender"],
+  school_subjects: ["Biology", "Calculus", "Geography", "History", "Physics", "Art"],
+  daily_activities: ["Brushing Teeth", "Cooking", "Exercising", "Gardening", "Reading"]
+};
 
     function showDebugToast(msg, type) {
       const t = document.getElementById("toast");
