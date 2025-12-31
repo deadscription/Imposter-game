@@ -113,7 +113,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-// 1. Firebase Configuration
+// 1. Firebase Configuration (Keep your existing details)
   const firebaseConfig = {
     apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
     authDomain: "imposter-game-515d8.firebaseapp.com",
@@ -127,105 +127,121 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Global State
   let playerName = null;
   let playerIndex = null;
   let isHost = false;
   let currentSeed = null;
 
-  const wordBank = {
-    animals: ["Lion", "Penguin", "Elephant", "Giraffe", "Hamster", "Shark"],
-    food: ["Pizza", "Sushi", "Taco", "Burger", "Pancake", "Pasta"],
-    places: ["Paris", "Jungle", "Hospital", "Space Station", "Library", "Beach"],
-    objects: ["Guitar", "Smartphone", "Telescope", "Umbrella", "Hammer", "Clock"]
+  const categories = {
+    animals: ["Lion", "Tiger", "Elephant", "Zebra", "Monkey"],
+    colors: ["Red", "Blue", "Yellow", "Green", "Purple"],
+    countries: ["USA", "Japan", "France", "Brazil", "India"],
+    kitchen_utensils: ["Spoon", "Fork", "Knife", "Plate", "Bowl"],
+    clothing: ["Shirt", "Pants", "Hat", "Socks", "Jacket"],
+    household_appliances: ["Fridge", "Microwave", "Toaster", "Vacuum", "Washer"],
+    footwear: ["Sneakers", "Boots", "Sandals", "Slippers", "Heels"],
+    landmarks: ["Eiffel Tower", "Pyramids", "Big Ben", "Grand Canyon"],
+    weather: ["Rain", "Snow", "Sunny", "Storm", "Windy"],
+    trees: ["Oak", "Palm", "Pine", "Maple", "Willow"],
+    insects: ["Bee", "Ant", "Butterfly", "Spider", "Fly"],
+    fruits_veg: ["Apple", "Banana", "Carrot", "Potato", "Tomato"],
+    desserts: ["Cake", "Cookie", "Ice Cream", "Pie", "Donut"],
+    breakfast: ["Eggs", "Pancakes", "Toast", "Cereal", "Bacon"],
+    olympic_sports: ["Soccer", "Swimming", "Running", "Tennis", "Boxing"],
+    musical_instruments: ["Piano", "Guitar", "Drums", "Violin", "Flute"],
+    art_supplies: ["Paint", "Brush", "Pencil", "Paper", "Crayon"],
+    board_games: ["Chess", "Monopoly", "Checkers", "Dice", "Cards"],
+    space: ["Moon", "Sun", "Star", "Planet", "Rocket"],
+    vehicles: ["Car", "Bus", "Train", "Plane", "Boat"],
+    car_parts: ["Wheel", "Engine", "Door", "Brake", "Mirror"],
+    occupations: ["Doctor", "Teacher", "Pilot", "Nurse", "Chef"],
+    superpowers: ["Flight", "Invisibility", "Strength", "Speed"],
+    characters: ["Batman", "Mickey Mouse", "Spiderman", "Superman"],
+    mythical: ["Dragon", "Unicorn", "Ghost", "Mermaid", "Vampire"],
+    body_parts: ["Eye", "Hand", "Foot", "Nose", "Ear"],
+    shapes: ["Circle", "Square", "Triangle", "Star", "Heart"],
+    flowers: ["Rose", "Tulip", "Daisy", "Sunflower", "Lily"],
+    school_subjects: ["Math", "Science", "History", "Art", "Music"],
+    activities: ["Running", "Cooking", "Sleeping", "Eating", "Reading"]
   };
 
-  // --- BUTTON LISTENERS (Defined Once) ---
+  // --- DEBUG TOAST FUNCTION ---
+  function showDebugToast(msg, type) {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.style.background = type === "api" ? "#2196f3" : "#ff9800";
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 3000);
+    console.log(`DEBUG: ${msg}`);
+  }
 
+  // --- WORD FETCHER ---
+  async function getDynamicWord(categoryKey) {
+    const query = categoryKey.replace('_', ' ');
+    try {
+      const response = await fetch(`https://api.datamuse.com/words?ml=${query}&max=30`);
+      const data = await response.json();
+      const filtered = data.filter(w => !w.word.includes(' ') && w.word.length > 2);
+      
+      if (filtered.length > 5) {
+        const word = filtered[Math.floor(Math.random() * Math.min(filtered.length, 12))].word.toUpperCase();
+        showDebugToast(`Source: Datamuse API (${word})`, "api");
+        return word;
+      }
+      throw new Error("API results too low");
+    } catch (e) {
+      const list = categories[categoryKey];
+      const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
+      showDebugToast(`Source: Local Backup (${word})`, "local");
+      return word;
+    }
+  }
+
+  // --- BUTTONS ---
   document.getElementById("joinBtn").onclick = function() {
     const name = document.getElementById("nameInput").value.trim();
-    if (!name || !currentSeed) return alert("Connecting to server... please wait.");
-
+    if (!name || !currentSeed) return;
     const playersRef = db.ref("games/" + currentSeed + "/players");
-
     playersRef.once("value").then(snap => {
-      const players = snap.val() || [];
-      const playerList = Array.isArray(players) ? players : Object.values(players);
-      
+      const playerList = Object.values(snap.val() || {});
       playerIndex = playerList.length;
       playerName = name;
       isHost = (playerIndex === 0);
-
-      return playersRef.child(playerIndex).set({ name: name, color: "#90caf9" });
+      return playersRef.child(playerIndex).set({ name, color: "#90caf9" });
     }).then(() => {
       document.getElementById("joinScreen").style.display = "none";
       document.getElementById("playersList").style.display = "block";
       if (isHost) document.getElementById("categorySection").style.display = "block";
-      else document.getElementById("waitingCategoryMessage").textContent = "Waiting for host to pick a category...";
     });
   };
 
-  document.getElementById("chooseCategoryBtn").onclick = function() {
-    if (!isHost || !currentSeed) return;
-    const cat = document.getElementById("categorySelect").value;
-    const sessionRef = db.ref("games/" + currentSeed);
+  document.getElementById("chooseCategoryBtn").onclick = async function() {
+    const btn = document.getElementById("chooseCategoryBtn");
+    const catKey = document.getElementById("categorySelect").value;
+    btn.disabled = true;
+    btn.textContent = "Fetching...";
     
-    sessionRef.child("players").once("value").then(snap => {
-      const players = snap.val() || [];
-      const playerList = Array.isArray(players) ? players : Object.values(players);
-      const randomWord = wordBank[cat][Math.floor(Math.random() * wordBank[cat].length)];
-      const randomImposter = Math.floor(Math.random() * playerList.length);
+    const word = await getDynamicWord(catKey);
+    const sessionRef = db.ref("games/" + currentSeed);
+    const playersSnap = await sessionRef.child("players").once("value");
+    const imposter = Math.floor(Math.random() * Object.keys(playersSnap.val()).length);
 
-      sessionRef.update({
-        category: cat,
-        word: randomWord,
-        imposter: randomImposter
-      });
-    });
+    await sessionRef.update({ category: catKey.replace('_', ' '), word, imposter });
+    btn.disabled = false;
+    btn.textContent = "Pick Word & Start";
   };
 
-  document.getElementById("newRoundBtn").onclick = function() {
-    if (!isHost || !currentSeed) return;
-    // SOFT RESET: Clear game data but keep players
-    db.ref("games/" + currentSeed).update({
-      category: null,
-      word: null,
-      imposter: null
-    });
-  };
+  document.getElementById("newRoundBtn").onclick = () => db.ref("games/" + currentSeed).update({ category: null, word: null, imposter: null });
+  document.getElementById("exitGameBtn").onclick = () => { if(confirm("Exit?")) db.ref("games/"+currentSeed).remove().then(() => db.ref("games/currentRound").set(Math.floor(Math.random()*999999))); };
 
-  document.getElementById("exitGameBtn").onclick = function() {
-    if (!isHost || !currentSeed) return;
-    if (!confirm("This will delete the game and kick everyone out. Proceed?")) return;
-
-    const oldSeed = currentSeed;
-    // HARD RESET: Delete entire session and change the global seed
-    db.ref("games/" + oldSeed).remove().then(() => {
-      return db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
-    });
-  };
-
-  // --- CORE GAME ENGINE ---
-
+  // --- ENGINE ---
   firebase.auth().signInAnonymously().then(() => {
     db.ref("games/currentRound").on("value", snapshot => {
       const newSeed = snapshot.val();
-      
-      // If seed changed (Hard Reset), force everyone to join screen
-      if (currentSeed && newSeed !== currentSeed) {
-        playerName = null;
-        playerIndex = null;
-        isHost = false;
-      }
-      
+      if (currentSeed && newSeed !== currentSeed) { playerName = null; playerIndex = null; isHost = false; }
       currentSeed = newSeed;
-      if (currentSeed) {
-        resetGameUI();
-        attachFirebaseListeners(currentSeed);
-      } else {
-        // First time initialization
-        db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
-      }
+      if (currentSeed) { resetGameUI(); attachFirebaseListeners(currentSeed); }
+      else db.ref("games/currentRound").set(Math.floor(Math.random()*999999));
     });
   });
 
@@ -240,76 +256,54 @@
     document.getElementById("chosenCategory").textContent = "";
     document.getElementById("waitingCategoryMessage").textContent = (playerName && !isHost) ? "Waiting for host..." : "";
     document.getElementById("playersUl").innerHTML = "";
+    const select = document.getElementById("categorySelect");
+    if (select.options.length <= 1) {
+      Object.keys(categories).forEach(cat => {
+        let opt = document.createElement('option');
+        opt.value = cat; opt.innerHTML = cat.replace('_', ' ').toUpperCase();
+        select.appendChild(opt);
+      });
+    }
   }
 
   function attachFirebaseListeners(seed) {
     const sessionRef = db.ref("games/" + seed);
-
-    // Sync Players
     sessionRef.child("players").on("value", snap => {
-      const playersUl = document.getElementById("playersUl");
-      playersUl.innerHTML = "";
-      const players = snap.val() || [];
-      Object.values(players).forEach((p, idx) => {
+      const ul = document.getElementById("playersUl"); ul.innerHTML = "";
+      Object.values(snap.val() || {}).forEach((p, i) => {
         const li = document.createElement("li");
-        if (p.name === playerName && idx === playerIndex) li.className = "local-player";
-        li.innerHTML = `<span class="player-badge" style="background:${p.color}"></span> ${p.name} ${idx === 0 ? "👑" : ""}`;
-        playersUl.appendChild(li);
+        if (p.name === playerName && i === playerIndex) li.className = "local-player";
+        li.innerHTML = `<span class="player-badge" style="background:${p.color}"></span> ${p.name} ${i === 0 ? "👑" : ""}`;
+        ul.appendChild(li);
       });
     });
 
-    // Sync Game State
     sessionRef.on("value", snap => {
       const data = snap.val();
-      
-      // If session was deleted by host (Hard Reset)
-      if (!snap.exists()) {
-        resetGameUI();
-        return;
-      }
-
-      // If game is in "Waiting" state (Soft Reset)
+      if (!snap.exists()) { resetGameUI(); return; }
       if (!data.category) {
         document.getElementById("revealBtn").style.display = "none";
         document.getElementById("wordBox").style.display = "none";
         document.getElementById("chosenCategory").textContent = "";
-        if (playerName && isHost) {
-          document.getElementById("categorySection").style.display = "block";
-          document.getElementById("exitGameBtn").style.display = "inline-block";
-        }
-        if (playerName && !isHost) {
-          document.getElementById("waitingCategoryMessage").textContent = "Waiting for host to pick a category...";
-        }
+        if (playerName && isHost) { document.getElementById("categorySection").style.display = "block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
+        if (playerName && !isHost) document.getElementById("waitingCategoryMessage").textContent = "Waiting for host...";
         return;
       }
-
-      // If game is Active
       if (data.category && playerName) {
         document.getElementById("waitingCategoryMessage").textContent = "";
         document.getElementById("categorySection").style.display = "none";
         document.getElementById("chosenCategory").textContent = "Category: " + data.category.toUpperCase();
         document.getElementById("revealBtn").style.display = "inline-block";
-        
-        if (isHost) {
-          document.getElementById("newRoundBtn").style.display = "inline-block";
-          document.getElementById("exitGameBtn").style.display = "inline-block";
-        }
-
+        if (isHost) { document.getElementById("newRoundBtn").style.display = "inline-block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
         document.getElementById("revealBtn").onclick = () => {
-          const wordBox = document.getElementById("wordBox");
-          const isImposter = (playerIndex == data.imposter);
-          if (wordBox.style.display === "none") {
-            wordBox.innerHTML = isImposter ? "❗ You are the <b>IMPOSTER</b>" : `🗝️ Word: <b>${data.word}</b>`;
-            wordBox.style.display = "block";
+          const wb = document.getElementById("wordBox");
+          if (wb.style.display === "none") {
+            wb.innerHTML = (playerIndex == data.imposter) ? "❗ You are the <b>IMPOSTER</b>" : `🗝️ Word: <b>${data.word}</b>`;
+            wb.style.display = "block";
             document.getElementById("revealBtn").textContent = "Hide Word";
-          } else {
-            wordBox.style.display = "none";
-            document.getElementById("revealBtn").textContent = "Reveal Word";
-          }
+          } else { wb.style.display = "none"; document.getElementById("revealBtn").textContent = "Reveal Word"; }
         };
       }
     });
   }
 </script>
-</body>
-</html>
