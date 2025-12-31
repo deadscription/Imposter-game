@@ -29,35 +29,15 @@
       justify-content: center;
       gap: 10px;
     }
-    #playersUl li {
-      background: #333;
-      padding: 8px 12px;
-      border-radius: 8px;
-    }
-    .player-badge {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 5px;
-    }
+    #playersUl li { background: #333; padding: 8px 12px; border-radius: 8px; }
+    .player-badge { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
     input[type=text], select {
-      padding: 12px;
-      border-radius: 8px;
-      border: none;
-      margin-bottom: 10px;
-      background: #1f1f1f;
-      color: #fff;
-      width: 80%;
+      padding: 12px; border-radius: 8px; border: none; margin-bottom: 10px;
+      background: #1f1f1f; color: #fff; width: 80%;
     }
     button {
-      padding: 12px 24px;
-      font-size: 1em;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin: 5px;
-      transition: opacity 0.3s;
+      padding: 12px 24px; font-size: 1em; border: none; border-radius: 8px;
+      cursor: pointer; margin: 5px; transition: opacity 0.3s;
     }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     #joinBtn { background: #4caf50; color: white; }
@@ -65,36 +45,28 @@
     #newRoundBtn { background: #ffb74d; color: #111; font-weight: bold; }
     #exitGameBtn { background: #f44336; color: white; }
     #wordBox {
-      margin: 20px auto;
-      padding: 20px;
-      background: #333;
-      border-radius: 10px;
-      border: 2px solid #ffb74d;
-      font-size: 1.4em;
+      margin: 20px auto; padding: 20px; background: #333;
+      border-radius: 10px; border: 2px solid #ffb74d; font-size: 1.4em;
     }
     .local-player { border: 1px solid #ffb74d; }
 
-    /* Toast Notification Style */
+    /* Result Popup Overlay */
+    #resultOverlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center;
+    }
+    .result-content {
+      background: #1f1f1f; padding: 30px; border-radius: 15px;
+      border: 2px solid #ffb74d; text-align: center; max-width: 80%;
+    }
+
+    /* Toast Notification */
     #toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 24px;
-      border-radius: 30px;
-      color: white;
-      font-weight: bold;
-      display: none;
-      z-index: 1000;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      padding: 12px 24px; border-radius: 30px; color: white; display: none; z-index: 1000;
     }
     #toast.show { display: block; animation: fadeInOut 3s forwards; }
-    @keyframes fadeInOut {
-      0% { opacity: 0; bottom: 10px; }
-      15% { opacity: 1; bottom: 20px; }
-      85% { opacity: 1; bottom: 20px; }
-      100% { opacity: 0; bottom: 10px; }
-    }
+    @keyframes fadeInOut { 0%, 100% { opacity: 0; } 15%, 85% { opacity: 1; } }
   </style>
 </head>
 <body>
@@ -113,9 +85,7 @@
 
   <div id="categorySection" style="display:none;">
     <h3>🎯 Select a Category</h3>
-    <select id="categorySelect">
-        <option value="">-- Choose Category --</option>
-    </select>
+    <select id="categorySelect"><option value="">-- Choose Category --</option></select>
     <br>
     <button id="chooseCategoryBtn" style="background:#ffb74d;">Pick Word & Start</button>
   </div>
@@ -128,6 +98,14 @@
     <br>
     <button id="newRoundBtn" style="display:none;">Start New Round</button>
     <button id="exitGameBtn" style="display:none;">Exit Game</button>
+  </div>
+
+  <div id="resultOverlay">
+    <div class="result-content">
+      <h2 style="color:#ffb74d;">🏁 Round Results</h2>
+      <p id="resultText" style="font-size:1.2em; margin:20px 0; color:#eee;"></p>
+      <button id="closeResultBtn" style="background:#4caf50; color:white; width:100%;">Continue</button>
+    </div>
   </div>
 
   <div id="toast"></div>
@@ -152,51 +130,38 @@
 
     let playerName = null, playerIndex = null, isHost = false, currentSeed = null;
 
-  const categories = {
-  // Basics
-  animals: ["Lion", "Tiger", "Elephant", "Giraffe", "Penguin", "Kangaroo"],
-  colors: ["Crimson", "Turquoise", "Lavender", "Emerald", "Magenta", "Gold"],
-  countries: ["Japan", "Brazil", "Egypt", "Canada", "Italy", "Australia"],
-  
-  // Lifestyle
-  kitchen_utensils: ["Whisk", "Spatula", "Grater", "Ladle", "Peeler", "Tongs"],
-  clothing: ["Scarf", "Mittens", "Belt", "Jacket", "Sweater", "Apron"],
-  household_appliances: ["Toaster", "Blender", "Vacuum", "Kettle", "Mixer", "Fridge"],
-  footwear: ["Slipper", "High Heel", "Cleat", "Sandal", "Boot", "Sneaker"],
-
-  // Nature
-  landmarks: ["Eiffel Tower", "Pyramids", "Colosseum", "Big Ben", "Taj Mahal"],
-  weather: ["Blizzard", "Tornado", "Rainbow", "Hurricane", "Thunder", "Fog"],
-  trees: ["Palm", "Pine", "Willow", "Oak", "Maple", "Banyan"],
-  insects: ["Butterfly", "Mosquito", "Grasshopper", "Beetle", "Ladybug", "Moth"],
-
-  // Food
-  fruits_veg: ["Pineapple", "Broccoli", "Pumpkin", "Garlic", "Coconut", "Corn"],
-  desserts: ["Cheesecake", "Brownie", "Macaron", "Pudding", "Sorbet", "Muffin"],
-  breakfast: ["Omelette", "Waffle", "Bagel", "Pancakes", "Muesli", "Smoothie"],
-
-  // Hobbies
-  olympic_sports: ["Archery", "Fencing", "Gymnastics", "Karate", "Sailing", "Judo"],
-  musical_instruments: ["Saxophone", "Cello", "Harmonica", "Trumpet", "Harp", "Drums"],
-  art_supplies: ["Canvas", "Charcoal", "Easel", "Pastel", "Palette", "Crayons"],
-  board_games: ["Chess", "Monopoly", "Scrabble", "Dominoes", "Checkers", "Clue"],
-
-  // Science/Tech
-  space: ["Asteroid", "Comet", "Satellite", "Galaxy", "Telescope", "Rocket"],
-  vehicles: ["Helicopter", "Submarine", "Tractor", "Scooter", "Bicycle", "Truck"],
-  car_parts: ["Windshield", "Engine", "Steering Wheel", "Headlight", "Bumper"],
-
-  // Jobs/Misc
-  occupations: ["Firefighter", "Astronaut", "Librarian", "Farmer", "Baker", "Judge"],
-  superpowers: ["Invisibility", "Teleportation", "Flight", "Strength", "Healing"],
-  fictional_characters: ["Batman", "Sherlock", "Harry Potter", "Spider-Man", "Yoda"],
-  mythical_creatures: ["Dragon", "Unicorn", "Phoenix", "Mermaid", "Centaur", "Ghost"],
-  body_parts: ["Elbow", "Kidney", "Eyebrow", "Shoulder", "Ankle", "Knuckle"],
-  shapes: ["Octagon", "Cylinder", "Pyramid", "Diamond", "Sphere", "Oval"],
-  flowers: ["Sunflower", "Tulip", "Orchid", "Daisy", "Rose", "Lavender"],
-  school_subjects: ["Biology", "Calculus", "Geography", "History", "Physics", "Art"],
-  daily_activities: ["Brushing Teeth", "Cooking", "Exercising", "Gardening", "Reading"]
-};
+    const categories = {
+      animals: ["Lion", "Tiger", "Elephant", "Giraffe", "Penguin", "Kangaroo"],
+      colors: ["Crimson", "Turquoise", "Lavender", "Emerald", "Magenta", "Gold"],
+      countries: ["Japan", "Brazil", "Egypt", "Canada", "Italy", "Australia"],
+      kitchen_utensils: ["Whisk", "Spatula", "Grater", "Ladle", "Peeler", "Tongs"],
+      clothing: ["Scarf", "Mittens", "Belt", "Jacket", "Sweater", "Apron"],
+      household_appliances: ["Toaster", "Blender", "Vacuum", "Kettle", "Mixer", "Fridge"],
+      footwear: ["Slipper", "High Heel", "Cleat", "Sandal", "Boot", "Sneaker"],
+      landmarks: ["Eiffel Tower", "Pyramids", "Colosseum", "Big Ben", "Taj Mahal"],
+      weather: ["Blizzard", "Tornado", "Rainbow", "Hurricane", "Thunder", "Fog"],
+      trees: ["Palm", "Pine", "Willow", "Oak", "Maple", "Banyan"],
+      insects: ["Butterfly", "Mosquito", "Grasshopper", "Beetle", "Ladybug", "Moth"],
+      fruits_veg: ["Pineapple", "Broccoli", "Pumpkin", "Garlic", "Coconut", "Corn"],
+      desserts: ["Cheesecake", "Brownie", "Macaron", "Pudding", "Sorbet", "Muffin"],
+      breakfast: ["Omelette", "Waffle", "Bagel", "Pancakes", "Muesli", "Smoothie"],
+      olympic_sports: ["Archery", "Fencing", "Gymnastics", "Karate", "Sailing", "Judo"],
+      musical_instruments: ["Saxophone", "Cello", "Harmonica", "Trumpet", "Harp", "Drums"],
+      art_supplies: ["Canvas", "Charcoal", "Easel", "Pastel", "Palette", "Crayons"],
+      board_games: ["Chess", "Monopoly", "Scrabble", "Dominoes", "Checkers", "Clue"],
+      space: ["Asteroid", "Comet", "Satellite", "Galaxy", "Telescope", "Rocket"],
+      vehicles: ["Helicopter", "Submarine", "Tractor", "Scooter", "Bicycle", "Truck"],
+      car_parts: ["Windshield", "Engine", "Steering Wheel", "Headlight", "Bumper"],
+      occupations: ["Firefighter", "Astronaut", "Librarian", "Farmer", "Baker", "Judge"],
+      superpowers: ["Invisibility", "Teleportation", "Flight", "Strength", "Healing"],
+      fictional_characters: ["Batman", "Sherlock", "Harry Potter", "Spider-Man", "Yoda"],
+      mythical_creatures: ["Dragon", "Unicorn", "Phoenix", "Mermaid", "Centaur", "Ghost"],
+      body_parts: ["Elbow", "Kidney", "Eyebrow", "Shoulder", "Ankle", "Knuckle"],
+      shapes: ["Octagon", "Cylinder", "Pyramid", "Diamond", "Sphere", "Oval"],
+      flowers: ["Sunflower", "Tulip", "Orchid", "Daisy", "Rose", "Lavender"],
+      school_subjects: ["Biology", "Calculus", "Geography", "History", "Physics", "Art"],
+      daily_activities: ["Brushing Teeth", "Cooking", "Exercising", "Gardening", "Reading"]
+    };
 
     function showDebugToast(msg, type) {
       const t = document.getElementById("toast");
@@ -209,15 +174,15 @@
     async function getDynamicWord(catKey) {
       const query = catKey.replace('_', ' ');
       try {
-        const res = await fetch(`https://api.datamuse.com/words?ml=${query}&max=20`);
+        const res = await fetch(`https://api.datamuse.com/words?ml=${query}&max=25`);
         const data = await res.json();
-        const filtered = data.filter(w => !w.word.includes(' ') && w.word.length > 2);
+        const filtered = data.filter(w => !w.word.includes(' ') && w.word.length > 3 && w.word.length < 12);
         if (filtered.length > 5) {
-          const word = filtered[Math.floor(Math.random() * Math.min(filtered.length, 10))].word.toUpperCase();
+          const word = filtered[Math.floor(Math.random() * 10)].word.toUpperCase();
           showDebugToast(`Source: API (${word})`, "api");
           return word;
         }
-        throw "short";
+        throw "niche";
       } catch (e) {
         const list = categories[catKey];
         const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
@@ -231,13 +196,13 @@
       if (!name || !currentSeed) return;
       const ref = db.ref("games/" + currentSeed + "/players");
       ref.once("value").then(snap => {
-        const list = Object.values(snap.val() || {});
-        playerIndex = list.length; playerName = name; isHost = (playerIndex === 0);
+        const players = snap.val() || [];
+        playerIndex = Array.isArray(players) ? players.length : Object.keys(players).length;
+        playerName = name; isHost = (playerIndex === 0);
         return ref.child(playerIndex).set({ name, color: "#90caf9" });
       }).then(() => {
         document.getElementById("joinScreen").style.display = "none";
         document.getElementById("playersList").style.display = "block";
-        if (isHost) document.getElementById("categorySection").style.display = "block";
       });
     };
 
@@ -246,19 +211,23 @@
       const catKey = document.getElementById("categorySelect").value;
       if(!catKey) return alert("Select a category!");
       btn.disabled = true; btn.textContent = "Fetching...";
-      
       const word = await getDynamicWord(catKey);
-      const sessionRef = db.ref("games/" + currentSeed);
-      const playersSnap = await sessionRef.child("players").once("value");
-      const imposter = Math.floor(Math.random() * Object.keys(playersSnap.val()).length);
+      const playersSnap = await db.ref("games/" + currentSeed + "/players").once("value");
+      const pCount = Object.keys(playersSnap.val()).length;
+      const imposter = Math.floor(Math.random() * pCount);
 
-      await sessionRef.update({ category: catKey.replace('_', ' '), word, imposter });
+      await db.ref("games/" + currentSeed).update({ category: catKey.replace('_', ' '), word, imposter, showResults: false });
       btn.disabled = false; btn.textContent = "Pick Word & Start";
     };
 
-    document.getElementById("newRoundBtn").onclick = () => db.ref("games/" + currentSeed).update({ category: null, word: null, imposter: null });
-    document.getElementById("exitGameBtn").onclick = () => { 
-      if(confirm("Exit game for all?")) db.ref("games/"+currentSeed).remove().then(() => db.ref("games/currentRound").set(Math.floor(Math.random()*999999))); 
+    document.getElementById("newRoundBtn").onclick = () => db.ref("games/" + currentSeed).update({ showResults: true });
+    
+    document.getElementById("exitGameBtn").onclick = () => {
+      if(confirm("Exit game for all?")) {
+        db.ref("games/" + currentSeed).remove().then(() => {
+          db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
+        });
+      }
     };
 
     firebase.auth().signInAnonymously().then(() => {
@@ -267,7 +236,7 @@
         if (currentSeed && ns !== currentSeed) { playerName = null; playerIndex = null; isHost = false; }
         currentSeed = ns;
         if (currentSeed) { resetGameUI(); attachListeners(currentSeed); }
-        else db.ref("games/currentRound").set(Math.floor(Math.random()*999999));
+        else db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
       });
     });
 
@@ -282,6 +251,7 @@
       document.getElementById("chosenCategory").textContent = "";
       document.getElementById("waitingCategoryMessage").textContent = (playerName && !isHost) ? "Waiting for host..." : "";
       document.getElementById("playersUl").innerHTML = "";
+      document.getElementById("resultOverlay").style.display = "none";
       
       const sel = document.getElementById("categorySelect");
       if (sel.options.length <= 1) {
@@ -307,29 +277,29 @@
       sessionRef.on("value", snap => {
         const d = snap.val();
         if (!snap.exists()) { resetGameUI(); return; }
-        
-        // --- UPDATED RESET LOGIC START ---
-      if (!d.category) {
-        // 1. Force the Reveal elements to reset
-        const wb = document.getElementById("wordBox");
-        const rb = document.getElementById("revealBtn");
-        
-        wb.style.display = "none";
-        wb.innerHTML = "";
-        rb.style.display = "none";
-        rb.textContent = "Reveal Word"; // Reset text from 'Hide' to 'Reveal'
-        
-        document.getElementById("chosenCategory").textContent = "";
-        
-        if (playerName && isHost) { 
-          document.getElementById("categorySection").style.display = "block"; 
-          document.getElementById("exitGameBtn").style.display = "inline-block"; 
+
+        // RESULT POPUP LOGIC
+        if (d.showResults && d.category) {
+          const playersArr = Object.values(d.players || {});
+          const impName = playersArr[d.imposter] ? playersArr[d.imposter].name : "Unknown";
+          document.getElementById("resultText").innerHTML = `The Imposter was: <b style="color:#ffb74d;">${impName}</b><br>Word: <b style="color:#2196f3;">${d.word}</b>`;
+          document.getElementById("resultOverlay").style.display = "flex";
+          document.getElementById("closeResultBtn").onclick = () => {
+            document.getElementById("resultOverlay").style.display = "none";
+            if (isHost) sessionRef.update({ category: null, word: null, imposter: null, showResults: false });
+          };
         }
-        if (playerName && !isHost) {
-          document.getElementById("waitingCategoryMessage").textContent = "Waiting for host...";
+
+        if (!d.category) {
+          document.getElementById("revealBtn").style.display = "none";
+          document.getElementById("revealBtn").textContent = "Reveal Word";
+          document.getElementById("wordBox").style.display = "none";
+          document.getElementById("chosenCategory").textContent = "";
+          if (playerName && isHost) { document.getElementById("categorySection").style.display = "block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
+          if (playerName && !isHost) document.getElementById("waitingCategoryMessage").textContent = "Waiting for host...";
+          return;
         }
-        return;
-      }
+
         if (d.category && playerName) {
           document.getElementById("waitingCategoryMessage").textContent = "";
           document.getElementById("categorySection").style.display = "none";
