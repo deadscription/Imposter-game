@@ -307,14 +307,29 @@
       sessionRef.on("value", snap => {
         const d = snap.val();
         if (!snap.exists()) { resetGameUI(); return; }
-        if (!d.category) {
-          document.getElementById("revealBtn").style.display = "none";
-          document.getElementById("wordBox").style.display = "none";
-          document.getElementById("chosenCategory").textContent = "";
-          if (playerName && isHost) { document.getElementById("categorySection").style.display = "block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
-          if (playerName && !isHost) document.getElementById("waitingCategoryMessage").textContent = "Waiting for host...";
-          return;
+        
+        // --- UPDATED RESET LOGIC START ---
+      if (!d.category) {
+        // 1. Force the Reveal elements to reset
+        const wb = document.getElementById("wordBox");
+        const rb = document.getElementById("revealBtn");
+        
+        wb.style.display = "none";
+        wb.innerHTML = "";
+        rb.style.display = "none";
+        rb.textContent = "Reveal Word"; // Reset text from 'Hide' to 'Reveal'
+        
+        document.getElementById("chosenCategory").textContent = "";
+        
+        if (playerName && isHost) { 
+          document.getElementById("categorySection").style.display = "block"; 
+          document.getElementById("exitGameBtn").style.display = "inline-block"; 
         }
+        if (playerName && !isHost) {
+          document.getElementById("waitingCategoryMessage").textContent = "Waiting for host...";
+        }
+        return;
+      }
         if (d.category && playerName) {
           document.getElementById("waitingCategoryMessage").textContent = "";
           document.getElementById("categorySection").style.display = "none";
