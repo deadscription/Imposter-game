@@ -171,25 +171,39 @@
       setTimeout(() => t.classList.remove("show"), 3000);
     }
 
-    async function getDynamicWord(catKey) {
-      const query = catKey.replace('_', ' ');
-      try {
-        const res = await fetch(`https://api.datamuse.com/words?ml=${query}&max=25`);
-        const data = await res.json();
-        const filtered = data.filter(w => !w.word.includes(' ') && w.word.length > 3 && w.word.length < 12);
-        if (filtered.length > 5) {
-          const word = filtered[Math.floor(Math.random() * 10)].word.toUpperCase();
-          showDebugToast(`Source: API (${word})`, "api");
-          return word;
-        }
-        throw "niche";
-      } catch (e) {
-        const list = categories[catKey];
-        const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
-        showDebugToast(`Source: Local (${word})`, "local");
-        return word;
-      }
+async function getDynamicWord(catKey) {
+  const query = catKey.replace('_', ' ');
+  // Avoid words that are too similar to the category name itself
+  const blacklist = [query, 'ware', 'thing', 'stuff', 'object', 'person', 'place'];
+
+  try {
+    // We use 'topics' and 'rel_jjb' to find specific nouns described by the category
+    const res = await fetch(`https://api.datamuse.com/words?topics=${query}&max=40`);
+    const data = await res.json();
+    
+    const filtered = data.filter(w => 
+      !w.word.includes(' ') &&              // No phrases
+      w.word.length > 3 &&                  // No tiny words
+      !blacklist.some(b => w.word.toLowerCase().includes(b)) && // No category names
+      w.score > 1000                        // Only high-confidence matches
+    );
+
+    if (filtered.length > 8) {
+      // We pick from a slightly lower index to avoid the "most obvious" (which are often category synonyms)
+      const randomIndex = Math.floor(Math.random() * 10) + 2; 
+      const word = filtered[Math.min(randomIndex, filtered.length - 1)].word.toUpperCase();
+      
+      showDebugToast(`Source: API (${word})`, "api");
+      return word;
     }
+    throw "niche";
+  } catch (e) {
+    const list = categories[catKey];
+    const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
+    showDebugToast(`Source: Local (${word})`, "local");
+    return word;
+  }
+}
 
     document.getElementById("joinBtn").onclick = function() {
       const name = document.getElementById("nameInput").value.trim();
