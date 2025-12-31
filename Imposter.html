@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>🎭 Imposter Game</title>
+  <title>🐺 Wolf in the Fold</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -71,7 +71,7 @@
 </head>
 <body>
 
-  <h1>🎭 Imposter Game</h1>
+  <h1>🐺 Wolf in the Fold</h1>
 
   <div id="joinScreen">
     <input id="nameInput" type="text" placeholder="Enter your name..." />
@@ -79,7 +79,7 @@
   </div>
 
   <div id="playersList" style="display:none;">
-    <h3>🧑‍🤝‍🧑 Players</h3>
+    <h3>🧑‍🤝‍🧑 The Pack</h3>
     <ul id="playersUl"></ul>
   </div>
 
@@ -93,7 +93,7 @@
   <div id="gameUI">
     <div id="waitingCategoryMessage" style="color:#aaa; margin: 20px;"></div>
     <div id="chosenCategory" style="font-size: 1.2em; color: #ffb74d; margin-bottom: 10px;"></div>
-    <button id="revealBtn" style="display:none;">Reveal Word</button>
+    <button id="revealBtn" style="display:none;">Reveal Secret</button>
     <div id="wordBox" style="display:none;"></div>
     <br>
     <button id="newRoundBtn" style="display:none;">Start New Round</button>
@@ -115,7 +115,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
-    // 1. Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
       authDomain: "imposter-game-515d8.firebaseapp.com",
@@ -129,10 +128,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 2. Global State
     let playerName = null, playerIndex = null, isHost = false, currentSeed = null;
 
-    // 3. 1,500 Word Curated Database
     const categories = {
       animals: ["Lion", "Tiger", "Elephant", "Giraffe", "Penguin", "Kangaroo", "Panda", "Cheetah", "Hamster", "Crocodile", "Koala", "Octopus", "Zebra", "Gorilla", "Flamingo", "Platypus", "Chameleon", "Hippopotamus", "Squirrel", "Dolphin", "Rhino", "Camel", "Polar Bear", "Wolf", "Rabbit", "Bat", "Eagle", "Shark", "Whale", "Jellyfish", "Frog", "Turtle", "Snake", "Lizard", "Beaver", "Otter", "Seal", "Walrus", "Owl", "Parrot", "Peacock", "Swan", "Deer", "Moose", "Hyena", "Lemur", "Sloth", "Armadillo", "Badger", "Fox"],
       colors: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange", "Pink", "Brown", "Black", "White", "Gray", "Violet", "Indigo", "Turquoise", "Magenta", "Gold", "Silver", "Bronze", "Peach", "Lavender", "Crimson", "Navy", "Teal", "Beige", "Maroon", "Olive", "Cyan", "Amber", "Coral", "Ivory", "Khaki", "Mauve", "Ochre", "Salmon", "Tan", "Sky Blue", "Lime", "Ruby", "Emerald", "Sapphire", "Ebony", "Azure", "Mint", "Mustard", "Plum", "Rust", "Sepia", "Tangerine", "Vanilla", "Periwinkle"],
@@ -155,7 +152,7 @@
       space: ["Moon", "Sun", "Star", "Planet", "Rocket", "Asteroid", "Comet", "Satellite", "Galaxy", "Telescope", "Astronaut", "Orbit", "Gravity", "Black Hole", "Nebula", "Supernova", "Cosmos", "Universe", "Mars", "Jupiter", "Saturn", "Venus", "Mercury", "Uranus", "Neptune", "Pluto", "Alien", "UFO", "Spaceship", "Space Station", "Rover", "Probe", "Shuttle", "Meteor", "Meteorite", "Constellation", "Zodiac", "Solar System", "Milky Way", "Light Year", "Eclipse", "Solstice", "Equinox", "Vacuum", "Zero Gravity", "Big Bang", "Wormhole", "Dark Matter", "Exoplanet", "Launchpad"],
       vehicles: ["Car", "Bus", "Train", "Plane", "Boat", "Helicopter", "Submarine", "Tractor", "Scooter", "Bicycle", "Truck", "Motorcycle", "Van", "Lorry", "Ambulance", "Fire Truck", "Police Car", "Taxi", "Tram", "Subway", "Cable Car", "Ferry", "Yacht", "Canoe", "Kayak", "Raft", "Ship", "Jet", "Glider", "Hot Air Balloon", "Rocket", "Space Shuttle", "Tank", "Bulldozer", "Forklift", "Crane", "Segway", "Skateboard", "Rollerblades", "Sled", "Sleigh", "Carriage", "Rickshaw", "Unicycle", "Tricycle", "Moped", "Jet Ski", "Snowmobile", "Golf Cart", "Hovercraft"],
       car_parts: ["Wheel", "Engine", "Door", "Brake", "Mirror", "Windshield", "Steering Wheel", "Headlight", "Bumper", "Hood", "Trunk", "Tire", "Battery", "Radiator", "Alternator", "Spark Plug", "Exhaust", "Muffler", "Fuel Tank", "Transmission", "Clutch", "Gearbox", "Axle", "Suspension", "Shock Absorber", "Dashboard", "Speedometer", "Glove Box", "Seat Belt", "Airbag", "Seat", "Headrest", "Wiper", "Horn", "Antenna", "Sunroof", "Grille", "Fender", "Tail Light", "Indicator", "License Plate", "Gas Pedal", "Brake Pedal", "Handbrake", "Ignition", "Oil Filter", "Air Filter", "Piston", "Cylinder", "Chassis"],
-      occupations: ["Doctor", "Teacher", "Pilot", "Nurse", "Chef", "Firefighter", "Astronaut", "Librarian", "Farmer", "Baker", "Judge", "Lawyer", "Police Officer", "Soldier", "Scientist", "Engineer", "Architect", "Artist", "Musician", "Actor", "Dancer", "Writer", "Journalist", "Photographer", "Dentist", "Vet", "Pharmacist", "Carpenter", "Electrician", "Plumber", "Mechanic", "Pilot", "Sailor", "Barber", "Waiter", "Tailor", "Butcher", "Florist", "Banker", "Accountant", "Programmer", "Graphic Designer", "Athlete", "Coach", "Politician", "Diplomat", "Priest", "Monk", "Psychologist", "Detective"],
+      occupations: ["Doctor", "Teacher", "Pilot", "Nurse", "Chef", "Firefighter", "Astronaut", "Librarian", "Farmer", "Baker", "Judge", "Lawyer", "Police Officer", "Soldier", "Scientist", "Engineer", "Architect", "Artist", "Musician", "Actor", "Dancer", "Writer", "Journalist", "Photographer", "Dentist", "Vet", "Pharmacist", "Carpenter", "Electrician", "Plumber", "Mechanic", "Sailor", "Barber", "Waiter", "Tailor", "Butcher", "Florist", "Banker", "Accountant", "Programmer", "Graphic Designer", "Athlete", "Coach", "Politician", "Diplomat", "Priest", "Monk", "Psychologist", "Detective"],
       superpowers: ["Invisibility", "Teleportation", "Flight", "Strength", "Healing", "Telepathy", "Telekinesis", "Shapeshifting", "Time Travel", "Laser Vision", "Force Field", "Pyrokinesis", "Ice Breath", "X-Ray Vision", "Speed", "Agility", "Elasticity", "Size Manipulation", "Magnetism", "Electricity", "Animal Mimicry", "Wall Crawling", "Water Breathing", "Night Vision", "Invulnerability", "Energy Blast", "Mind Control", "Illusions", "Technopathy", "Clairvoyance", "Precognition", "Levitation", "Density Control", "Acid Secretion", "Sonic Scream", "Poison Touch", "Plant Control", "Weather Control", "Gravity Control", "Intangibility", "Self-Duplication", "Memory Manipulation", "Dream Walking", "Astral Projection", "Future Sight", "Heat Vision", "Enhanced Senses", "Luck Manipulation", "Camouflage", "Energy Shielding"],
       fictional_characters: ["Batman", "Sherlock Holmes", "Harry Potter", "Spider-Man", "Yoda", "Superman", "Iron Man", "Wonder Woman", "Hulk", "Thor", "Captain America", "Joker", "Voldemort", "Darth Vader", "Luke Skywalker", "Princess Leia", "Frodo Baggins", "Gandalf", "Legolas", "Gollum", "Katniss Everdeen", "James Bond", "Indiana Jones", "Jack Sparrow", "Mickey Mouse", "Donald Duck", "Bugs Bunny", "SpongeBob", "Patrick Star", "Simba", "Woody", "Buzz Lightyear", "Shrek", "Scooby-Doo", "Pikachu", "Mario", "Link", "Zelda", "Master Chief", "Lara Croft", "Sonic", "Cinderella", "Snow White", "Elsa", "Anna", "Peter Pan", "Alice in Wonderland", "Pinocchio", "Aladdin", "Robin Hood"],
       mythical_creatures: ["Dragon", "Unicorn", "Phoenix", "Mermaid", "Centaur", "Ghost", "Werewolf", "Vampire", "Minotaur", "Griffin", "Sphinx", "Pegasus", "Kraken", "Cyclops", "Hydra", "Medusa", "Zombie", "Goblin", "Elf", "Dwarf", "Troll", "Ogre", "Giant", "Fairy", "Pixie", "Gnome", "Leprechaun", "Banshee", "Yeti", "Bigfoot", "Loch Ness Monster", "Chimera", "Basilisk", "Cerberus", "Harpy", "Siren", "Satyr", "Nymph", "Dryad", "Gargoyle", "Chupacabra", "Manticore", "Kelpie", "Selkie", "Thunderbird", "Kappa", "Kitsune", "Oni", "Tengu", "Djinn"],
@@ -166,8 +163,7 @@
       daily_activities: ["Brushing Teeth", "Cooking", "Exercising", "Gardening", "Reading", "Sleeping", "Eating", "Washing Dishes", "Showering", "Getting Dressed", "Watching TV", "Working", "Studying", "Commuting", "Driving", "Walking", "Running", "Cleaning", "Laundry", "Vacuuming", "Grocery Shopping", "Talking on Phone", "Emailing", "Browsing Internet", "Meditating", "Writing", "Painting", "Singing", "Dancing", "Playing Games", "Listening to Music", "Drinking Water", "Making Bed", "Checking Mail", "Watering Plants", "Feed Pets", "Taking Photos", "Shaving", "Makeup", "Flossing", "Stretching", "Yoga", "Swimming", "Baking", "Knitting", "Sewing", "Recycling", "Volunteering", "Planning", "Thinking"]
     };
 
-    // 4. Game Functions
-    function showDebugToast(msg, type) {
+    function showDebugToast(msg) {
       const t = document.getElementById("toast");
       t.textContent = msg;
       t.style.background = "#4caf50";
@@ -178,9 +174,7 @@
     function getDynamicWord(catKey) {
       const list = categories[catKey];
       if (list && list.length > 0) {
-        const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
-        showDebugToast(`Word Selected: ${word}`);
-        return word;
+        return list[Math.floor(Math.random() * list.length)].toUpperCase();
       }
       return "ERROR";
     }
@@ -201,7 +195,6 @@
     };
 
     document.getElementById("chooseCategoryBtn").onclick = function() {
-      const btn = document.getElementById("chooseCategoryBtn");
       const catKey = document.getElementById("categorySelect").value;
       if(!catKey) return alert("Select a category!");
       
@@ -222,7 +215,7 @@
     document.getElementById("newRoundBtn").onclick = () => db.ref("games/" + currentSeed).update({ showResults: true });
     
     document.getElementById("exitGameBtn").onclick = () => {
-      if(confirm("Exit game for all?")) {
+      if(confirm("End the game and clear the fold?")) {
         db.ref("games/" + currentSeed).remove().then(() => {
           db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
         });
@@ -244,12 +237,12 @@
       document.getElementById("playersList").style.display = playerName ? "block" : "none";
       document.getElementById("categorySection").style.display = "none";
       document.getElementById("revealBtn").style.display = "none";
-      document.getElementById("revealBtn").textContent = "Reveal Word";
+      document.getElementById("revealBtn").textContent = "Reveal Secret";
       document.getElementById("wordBox").style.display = "none";
       document.getElementById("newRoundBtn").style.display = "none";
       document.getElementById("exitGameBtn").style.display = "none";
       document.getElementById("chosenCategory").textContent = "";
-      document.getElementById("waitingCategoryMessage").textContent = (playerName && !isHost) ? "Waiting for host..." : "";
+      document.getElementById("waitingCategoryMessage").textContent = (playerName && !isHost) ? "Waiting for the Host to set the fold..." : "";
       document.getElementById("playersUl").innerHTML = "";
       document.getElementById("resultOverlay").style.display = "none";
       
@@ -281,7 +274,7 @@
         if (d.showResults && d.category) {
           const playersArr = Object.values(d.players || {});
           const impName = playersArr[d.imposter] ? playersArr[d.imposter].name : "Unknown";
-          document.getElementById("resultText").innerHTML = `The Imposter was: <b style="color:#ffb74d;">${impName}</b><br>Word: <b style="color:#2196f3;">${d.word}</b>`;
+          document.getElementById("resultText").innerHTML = `The Wolf was: <b style="color:#ffb74d;">${impName}</b><br>Secret Word: <b style="color:#2196f3;">${d.word}</b>`;
           document.getElementById("resultOverlay").style.display = "flex";
           document.getElementById("closeResultBtn").onclick = () => {
             document.getElementById("resultOverlay").style.display = "none";
@@ -291,11 +284,11 @@
 
         if (!d.category) {
           document.getElementById("revealBtn").style.display = "none";
-          document.getElementById("revealBtn").textContent = "Reveal Word";
+          document.getElementById("revealBtn").textContent = "Reveal Secret";
           document.getElementById("wordBox").style.display = "none";
           document.getElementById("chosenCategory").textContent = "";
           if (playerName && isHost) { document.getElementById("categorySection").style.display = "block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
-          if (playerName && !isHost) document.getElementById("waitingCategoryMessage").textContent = "Waiting for host...";
+          if (playerName && !isHost) document.getElementById("waitingCategoryMessage").textContent = "Waiting for Host...";
           return;
         }
 
@@ -308,10 +301,10 @@
           document.getElementById("revealBtn").onclick = () => {
             const wb = document.getElementById("wordBox");
             if (wb.style.display === "none") {
-              wb.innerHTML = (playerIndex == d.imposter) ? "❗ You are the <b>IMPOSTER</b>" : `🗝️ Word: <b>${d.word}</b>`;
+              wb.innerHTML = (playerIndex == d.imposter) ? "🐺 You are the <b>WOLF</b>" : `🗝️ Secret Word: <b>${d.word}</b>`;
               wb.style.display = "block";
-              document.getElementById("revealBtn").textContent = "Hide Word";
-            } else { wb.style.display = "none"; document.getElementById("revealBtn").textContent = "Reveal Word"; }
+              document.getElementById("revealBtn").textContent = "Hide Secret";
+            } else { wb.style.display = "none"; document.getElementById("revealBtn").textContent = "Reveal Secret"; }
           };
         }
       });
