@@ -57,10 +57,13 @@
       border-radius: 8px;
       cursor: pointer;
       margin: 5px;
+      transition: opacity 0.3s;
     }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
     #joinBtn { background: #4caf50; color: white; }
     #revealBtn { background: #2196f3; color: white; }
-    #newRoundBtn { background: #f44336; color: white; }
+    #newRoundBtn { background: #ffb74d; color: #111; font-weight: bold; }
+    #exitGameBtn { background: #f44336; color: white; }
     #wordBox {
       margin: 20px auto;
       padding: 20px;
@@ -70,6 +73,28 @@
       font-size: 1.4em;
     }
     .local-player { border: 1px solid #ffb74d; }
+
+    /* Toast Notification Style */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    #toast.show { display: block; animation: fadeInOut 3s forwards; }
+    @keyframes fadeInOut {
+      0% { opacity: 0; bottom: 10px; }
+      15% { opacity: 1; bottom: 20px; }
+      85% { opacity: 1; bottom: 20px; }
+      100% { opacity: 0; bottom: 10px; }
+    }
   </style>
 </head>
 <body>
@@ -89,10 +114,7 @@
   <div id="categorySection" style="display:none;">
     <h3>🎯 Select a Category</h3>
     <select id="categorySelect">
-      <option value="animals">Animals</option>
-      <option value="food">Food</option>
-      <option value="places">Places</option>
-      <option value="objects">Objects</option>
+        <option value="">-- Choose Category --</option>
     </select>
     <br>
     <button id="chooseCategoryBtn" style="background:#ffb74d;">Pick Word & Start</button>
@@ -105,205 +127,177 @@
     <div id="wordBox" style="display:none;"></div>
     <br>
     <button id="newRoundBtn" style="display:none;">Start New Round</button>
-    <button id="exitGameBtn" style="display:none; background:#d32f2f;">Exit Game (Reset All)</button>
+    <button id="exitGameBtn" style="display:none;">Exit Game</button>
   </div>
+
+  <div id="toast"></div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
-<script>
-// 1. Firebase Configuration (Keep your existing details)
-  const firebaseConfig = {
-    apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
-    authDomain: "imposter-game-515d8.firebaseapp.com",
-    databaseURL: "https://imposter-game-515d8-default-rtdb.firebaseio.com",
-    projectId: "imposter-game-515d8",
-    storageBucket: "imposter-game-515d8.firebasestorage.app",
-    messagingSenderId: "727642877069",
-    appId: "1:727642877069:web:35f0113718fdde270b06c4"
-  };
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
+      authDomain: "imposter-game-515d8.firebaseapp.com",
+      databaseURL: "https://imposter-game-515d8-default-rtdb.firebaseio.com",
+      projectId: "imposter-game-515d8",
+      storageBucket: "imposter-game-515d8.firebasestorage.app",
+      messagingSenderId: "727642877069",
+      appId: "1:727642877069:web:35f0113718fdde270b06c4"
+    };
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-  let playerName = null;
-  let playerIndex = null;
-  let isHost = false;
-  let currentSeed = null;
+    let playerName = null, playerIndex = null, isHost = false, currentSeed = null;
 
-  const categories = {
-    animals: ["Lion", "Tiger", "Elephant", "Zebra", "Monkey"],
-    colors: ["Red", "Blue", "Yellow", "Green", "Purple"],
-    countries: ["USA", "Japan", "France", "Brazil", "India"],
-    kitchen_utensils: ["Spoon", "Fork", "Knife", "Plate", "Bowl"],
-    clothing: ["Shirt", "Pants", "Hat", "Socks", "Jacket"],
-    household_appliances: ["Fridge", "Microwave", "Toaster", "Vacuum", "Washer"],
-    footwear: ["Sneakers", "Boots", "Sandals", "Slippers", "Heels"],
-    landmarks: ["Eiffel Tower", "Pyramids", "Big Ben", "Grand Canyon"],
-    weather: ["Rain", "Snow", "Sunny", "Storm", "Windy"],
-    trees: ["Oak", "Palm", "Pine", "Maple", "Willow"],
-    insects: ["Bee", "Ant", "Butterfly", "Spider", "Fly"],
-    fruits_veg: ["Apple", "Banana", "Carrot", "Potato", "Tomato"],
-    desserts: ["Cake", "Cookie", "Ice Cream", "Pie", "Donut"],
-    breakfast: ["Eggs", "Pancakes", "Toast", "Cereal", "Bacon"],
-    olympic_sports: ["Soccer", "Swimming", "Running", "Tennis", "Boxing"],
-    musical_instruments: ["Piano", "Guitar", "Drums", "Violin", "Flute"],
-    art_supplies: ["Paint", "Brush", "Pencil", "Paper", "Crayon"],
-    board_games: ["Chess", "Monopoly", "Checkers", "Dice", "Cards"],
-    space: ["Moon", "Sun", "Star", "Planet", "Rocket"],
-    vehicles: ["Car", "Bus", "Train", "Plane", "Boat"],
-    car_parts: ["Wheel", "Engine", "Door", "Brake", "Mirror"],
-    occupations: ["Doctor", "Teacher", "Pilot", "Nurse", "Chef"],
-    superpowers: ["Flight", "Invisibility", "Strength", "Speed"],
-    characters: ["Batman", "Mickey Mouse", "Spiderman", "Superman"],
-    mythical: ["Dragon", "Unicorn", "Ghost", "Mermaid", "Vampire"],
-    body_parts: ["Eye", "Hand", "Foot", "Nose", "Ear"],
-    shapes: ["Circle", "Square", "Triangle", "Star", "Heart"],
-    flowers: ["Rose", "Tulip", "Daisy", "Sunflower", "Lily"],
-    school_subjects: ["Math", "Science", "History", "Art", "Music"],
-    activities: ["Running", "Cooking", "Sleeping", "Eating", "Reading"]
-  };
+    const categories = {
+      animals: ["Lion", "Tiger", "Elephant"], colors: ["Red", "Blue", "Yellow"], countries: ["USA", "Japan", "France"],
+      kitchen_utensils: ["Spoon", "Fork", "Knife"], clothing: ["Shirt", "Pants", "Hat"], household_appliances: ["Fridge", "Microwave"],
+      footwear: ["Sneakers", "Boots"], landmarks: ["Eiffel Tower", "Pyramids"], weather: ["Rain", "Snow"], trees: ["Oak", "Palm"],
+      insects: ["Bee", "Ant"], fruits_veg: ["Apple", "Banana"], desserts: ["Cake", "Cookie"], breakfast: ["Eggs", "Pancakes"],
+      olympic_sports: ["Soccer", "Swimming"], musical_instruments: ["Piano", "Guitar"], art_supplies: ["Paint", "Brush"],
+      board_games: ["Chess", "Monopoly"], space: ["Moon", "Sun"], vehicles: ["Car", "Bus"], car_parts: ["Wheel", "Engine"],
+      occupations: ["Doctor", "Teacher"], superpowers: ["Flight", "Invisibility"], characters: ["Batman", "Mickey Mouse"],
+      mythical: ["Dragon", "Unicorn"], body_parts: ["Eye", "Hand"], shapes: ["Circle", "Square"], flowers: ["Rose", "Tulip"],
+      school_subjects: ["Math", "Science"], activities: ["Running", "Cooking"]
+    };
 
-  // --- DEBUG TOAST FUNCTION ---
-  function showDebugToast(msg, type) {
-    const toast = document.getElementById("toast");
-    toast.textContent = msg;
-    toast.style.background = type === "api" ? "#2196f3" : "#ff9800";
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 3000);
-    console.log(`DEBUG: ${msg}`);
-  }
+    function showDebugToast(msg, type) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.background = type === "api" ? "#2196f3" : "#ff9800";
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 3000);
+    }
 
-  // --- WORD FETCHER ---
-  async function getDynamicWord(categoryKey) {
-    const query = categoryKey.replace('_', ' ');
-    try {
-      const response = await fetch(`https://api.datamuse.com/words?ml=${query}&max=30`);
-      const data = await response.json();
-      const filtered = data.filter(w => !w.word.includes(' ') && w.word.length > 2);
-      
-      if (filtered.length > 5) {
-        const word = filtered[Math.floor(Math.random() * Math.min(filtered.length, 12))].word.toUpperCase();
-        showDebugToast(`Source: Datamuse API (${word})`, "api");
+    async function getDynamicWord(catKey) {
+      const query = catKey.replace('_', ' ');
+      try {
+        const res = await fetch(`https://api.datamuse.com/words?ml=${query}&max=20`);
+        const data = await res.json();
+        const filtered = data.filter(w => !w.word.includes(' ') && w.word.length > 2);
+        if (filtered.length > 5) {
+          const word = filtered[Math.floor(Math.random() * Math.min(filtered.length, 10))].word.toUpperCase();
+          showDebugToast(`Source: API (${word})`, "api");
+          return word;
+        }
+        throw "short";
+      } catch (e) {
+        const list = categories[catKey];
+        const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
+        showDebugToast(`Source: Local (${word})`, "local");
         return word;
       }
-      throw new Error("API results too low");
-    } catch (e) {
-      const list = categories[categoryKey];
-      const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
-      showDebugToast(`Source: Local Backup (${word})`, "local");
-      return word;
     }
-  }
 
-  // --- BUTTONS ---
-  document.getElementById("joinBtn").onclick = function() {
-    const name = document.getElementById("nameInput").value.trim();
-    if (!name || !currentSeed) return;
-    const playersRef = db.ref("games/" + currentSeed + "/players");
-    playersRef.once("value").then(snap => {
-      const playerList = Object.values(snap.val() || {});
-      playerIndex = playerList.length;
-      playerName = name;
-      isHost = (playerIndex === 0);
-      return playersRef.child(playerIndex).set({ name, color: "#90caf9" });
-    }).then(() => {
-      document.getElementById("joinScreen").style.display = "none";
-      document.getElementById("playersList").style.display = "block";
-      if (isHost) document.getElementById("categorySection").style.display = "block";
-    });
-  };
-
-  document.getElementById("chooseCategoryBtn").onclick = async function() {
-    const btn = document.getElementById("chooseCategoryBtn");
-    const catKey = document.getElementById("categorySelect").value;
-    btn.disabled = true;
-    btn.textContent = "Fetching...";
-    
-    const word = await getDynamicWord(catKey);
-    const sessionRef = db.ref("games/" + currentSeed);
-    const playersSnap = await sessionRef.child("players").once("value");
-    const imposter = Math.floor(Math.random() * Object.keys(playersSnap.val()).length);
-
-    await sessionRef.update({ category: catKey.replace('_', ' '), word, imposter });
-    btn.disabled = false;
-    btn.textContent = "Pick Word & Start";
-  };
-
-  document.getElementById("newRoundBtn").onclick = () => db.ref("games/" + currentSeed).update({ category: null, word: null, imposter: null });
-  document.getElementById("exitGameBtn").onclick = () => { if(confirm("Exit?")) db.ref("games/"+currentSeed).remove().then(() => db.ref("games/currentRound").set(Math.floor(Math.random()*999999))); };
-
-  // --- ENGINE ---
-  firebase.auth().signInAnonymously().then(() => {
-    db.ref("games/currentRound").on("value", snapshot => {
-      const newSeed = snapshot.val();
-      if (currentSeed && newSeed !== currentSeed) { playerName = null; playerIndex = null; isHost = false; }
-      currentSeed = newSeed;
-      if (currentSeed) { resetGameUI(); attachFirebaseListeners(currentSeed); }
-      else db.ref("games/currentRound").set(Math.floor(Math.random()*999999));
-    });
-  });
-
-  function resetGameUI() {
-    document.getElementById("joinScreen").style.display = playerName ? "none" : "block";
-    document.getElementById("playersList").style.display = playerName ? "block" : "none";
-    document.getElementById("categorySection").style.display = "none";
-    document.getElementById("revealBtn").style.display = "none";
-    document.getElementById("wordBox").style.display = "none";
-    document.getElementById("newRoundBtn").style.display = "none";
-    document.getElementById("exitGameBtn").style.display = "none";
-    document.getElementById("chosenCategory").textContent = "";
-    document.getElementById("waitingCategoryMessage").textContent = (playerName && !isHost) ? "Waiting for host..." : "";
-    document.getElementById("playersUl").innerHTML = "";
-    const select = document.getElementById("categorySelect");
-    if (select.options.length <= 1) {
-      Object.keys(categories).forEach(cat => {
-        let opt = document.createElement('option');
-        opt.value = cat; opt.innerHTML = cat.replace('_', ' ').toUpperCase();
-        select.appendChild(opt);
+    document.getElementById("joinBtn").onclick = function() {
+      const name = document.getElementById("nameInput").value.trim();
+      if (!name || !currentSeed) return;
+      const ref = db.ref("games/" + currentSeed + "/players");
+      ref.once("value").then(snap => {
+        const list = Object.values(snap.val() || {});
+        playerIndex = list.length; playerName = name; isHost = (playerIndex === 0);
+        return ref.child(playerIndex).set({ name, color: "#90caf9" });
+      }).then(() => {
+        document.getElementById("joinScreen").style.display = "none";
+        document.getElementById("playersList").style.display = "block";
+        if (isHost) document.getElementById("categorySection").style.display = "block";
       });
-    }
-  }
+    };
 
-  function attachFirebaseListeners(seed) {
-    const sessionRef = db.ref("games/" + seed);
-    sessionRef.child("players").on("value", snap => {
-      const ul = document.getElementById("playersUl"); ul.innerHTML = "";
-      Object.values(snap.val() || {}).forEach((p, i) => {
-        const li = document.createElement("li");
-        if (p.name === playerName && i === playerIndex) li.className = "local-player";
-        li.innerHTML = `<span class="player-badge" style="background:${p.color}"></span> ${p.name} ${i === 0 ? "👑" : ""}`;
-        ul.appendChild(li);
+    document.getElementById("chooseCategoryBtn").onclick = async function() {
+      const btn = document.getElementById("chooseCategoryBtn");
+      const catKey = document.getElementById("categorySelect").value;
+      if(!catKey) return alert("Select a category!");
+      btn.disabled = true; btn.textContent = "Fetching...";
+      
+      const word = await getDynamicWord(catKey);
+      const sessionRef = db.ref("games/" + currentSeed);
+      const playersSnap = await sessionRef.child("players").once("value");
+      const imposter = Math.floor(Math.random() * Object.keys(playersSnap.val()).length);
+
+      await sessionRef.update({ category: catKey.replace('_', ' '), word, imposter });
+      btn.disabled = false; btn.textContent = "Pick Word & Start";
+    };
+
+    document.getElementById("newRoundBtn").onclick = () => db.ref("games/" + currentSeed).update({ category: null, word: null, imposter: null });
+    document.getElementById("exitGameBtn").onclick = () => { 
+      if(confirm("Exit game for all?")) db.ref("games/"+currentSeed).remove().then(() => db.ref("games/currentRound").set(Math.floor(Math.random()*999999))); 
+    };
+
+    firebase.auth().signInAnonymously().then(() => {
+      db.ref("games/currentRound").on("value", snapshot => {
+        const ns = snapshot.val();
+        if (currentSeed && ns !== currentSeed) { playerName = null; playerIndex = null; isHost = false; }
+        currentSeed = ns;
+        if (currentSeed) { resetGameUI(); attachListeners(currentSeed); }
+        else db.ref("games/currentRound").set(Math.floor(Math.random()*999999));
       });
     });
 
-    sessionRef.on("value", snap => {
-      const data = snap.val();
-      if (!snap.exists()) { resetGameUI(); return; }
-      if (!data.category) {
-        document.getElementById("revealBtn").style.display = "none";
-        document.getElementById("wordBox").style.display = "none";
-        document.getElementById("chosenCategory").textContent = "";
-        if (playerName && isHost) { document.getElementById("categorySection").style.display = "block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
-        if (playerName && !isHost) document.getElementById("waitingCategoryMessage").textContent = "Waiting for host...";
-        return;
+    function resetGameUI() {
+      document.getElementById("joinScreen").style.display = playerName ? "none" : "block";
+      document.getElementById("playersList").style.display = playerName ? "block" : "none";
+      document.getElementById("categorySection").style.display = "none";
+      document.getElementById("revealBtn").style.display = "none";
+      document.getElementById("wordBox").style.display = "none";
+      document.getElementById("newRoundBtn").style.display = "none";
+      document.getElementById("exitGameBtn").style.display = "none";
+      document.getElementById("chosenCategory").textContent = "";
+      document.getElementById("waitingCategoryMessage").textContent = (playerName && !isHost) ? "Waiting for host..." : "";
+      document.getElementById("playersUl").innerHTML = "";
+      
+      const sel = document.getElementById("categorySelect");
+      if (sel.options.length <= 1) {
+        Object.keys(categories).forEach(k => {
+          let o = document.createElement('option'); o.value = k; o.innerHTML = k.replace('_', ' ').toUpperCase();
+          sel.appendChild(o);
+        });
       }
-      if (data.category && playerName) {
-        document.getElementById("waitingCategoryMessage").textContent = "";
-        document.getElementById("categorySection").style.display = "none";
-        document.getElementById("chosenCategory").textContent = "Category: " + data.category.toUpperCase();
-        document.getElementById("revealBtn").style.display = "inline-block";
-        if (isHost) { document.getElementById("newRoundBtn").style.display = "inline-block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
-        document.getElementById("revealBtn").onclick = () => {
-          const wb = document.getElementById("wordBox");
-          if (wb.style.display === "none") {
-            wb.innerHTML = (playerIndex == data.imposter) ? "❗ You are the <b>IMPOSTER</b>" : `🗝️ Word: <b>${data.word}</b>`;
-            wb.style.display = "block";
-            document.getElementById("revealBtn").textContent = "Hide Word";
-          } else { wb.style.display = "none"; document.getElementById("revealBtn").textContent = "Reveal Word"; }
-        };
-      }
-    });
-  }
-</script>
+    }
+
+    function attachListeners(seed) {
+      const sessionRef = db.ref("games/" + seed);
+      sessionRef.child("players").on("value", snap => {
+        const ul = document.getElementById("playersUl"); ul.innerHTML = "";
+        Object.values(snap.val() || {}).forEach((p, i) => {
+          const li = document.createElement("li");
+          if (p.name === playerName && i === playerIndex) li.className = "local-player";
+          li.innerHTML = `<span class="player-badge" style="background:${p.color}"></span> ${p.name} ${i === 0 ? "👑" : ""}`;
+          ul.appendChild(li);
+        });
+      });
+
+      sessionRef.on("value", snap => {
+        const d = snap.val();
+        if (!snap.exists()) { resetGameUI(); return; }
+        if (!d.category) {
+          document.getElementById("revealBtn").style.display = "none";
+          document.getElementById("wordBox").style.display = "none";
+          document.getElementById("chosenCategory").textContent = "";
+          if (playerName && isHost) { document.getElementById("categorySection").style.display = "block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
+          if (playerName && !isHost) document.getElementById("waitingCategoryMessage").textContent = "Waiting for host...";
+          return;
+        }
+        if (d.category && playerName) {
+          document.getElementById("waitingCategoryMessage").textContent = "";
+          document.getElementById("categorySection").style.display = "none";
+          document.getElementById("chosenCategory").textContent = "Category: " + d.category.toUpperCase();
+          document.getElementById("revealBtn").style.display = "inline-block";
+          if (isHost) { document.getElementById("newRoundBtn").style.display = "inline-block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
+          document.getElementById("revealBtn").onclick = () => {
+            const wb = document.getElementById("wordBox");
+            if (wb.style.display === "none") {
+              wb.innerHTML = (playerIndex == d.imposter) ? "❗ You are the <b>IMPOSTER</b>" : `🗝️ Word: <b>${d.word}</b>`;
+              wb.style.display = "block";
+              document.getElementById("revealBtn").textContent = "Hide Word";
+            } else { wb.style.display = "none"; document.getElementById("revealBtn").textContent = "Reveal Word"; }
+          };
+        }
+      });
+    }
+  </script>
+</body>
+</html>
