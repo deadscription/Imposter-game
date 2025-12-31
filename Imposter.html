@@ -50,7 +50,6 @@
     }
     .local-player { border: 1px solid #ffb74d; }
 
-    /* Result Popup Overlay */
     #resultOverlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center;
@@ -60,7 +59,6 @@
       border: 2px solid #ffb74d; text-align: center; max-width: 80%;
     }
 
-    /* Debug Toast */
     #toast {
       position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
       padding: 12px 24px; border-radius: 30px; color: white; display: none; z-index: 1000;
@@ -93,7 +91,7 @@
   <div id="gameUI">
     <div id="waitingCategoryMessage" style="color:#aaa; margin: 20px;"></div>
     <div id="chosenCategory" style="font-size: 1.2em; color: #ffb74d; margin-bottom: 10px;"></div>
-    <button id="revealBtn" style="display:none;">Reveal Secret</button>
+    <button id="revealBtn" style="display:none;">Reveal Word</button>
     <div id="wordBox" style="display:none;"></div>
     <br>
     <button id="newRoundBtn" style="display:none;">Start New Round</button>
@@ -156,159 +154,4 @@
       superpowers: ["Invisibility", "Teleportation", "Flight", "Strength", "Healing", "Telepathy", "Telekinesis", "Shapeshifting", "Time Travel", "Laser Vision", "Force Field", "Pyrokinesis", "Ice Breath", "X-Ray Vision", "Speed", "Agility", "Elasticity", "Size Manipulation", "Magnetism", "Electricity", "Animal Mimicry", "Wall Crawling", "Water Breathing", "Night Vision", "Invulnerability", "Energy Blast", "Mind Control", "Illusions", "Technopathy", "Clairvoyance", "Precognition", "Levitation", "Density Control", "Acid Secretion", "Sonic Scream", "Poison Touch", "Plant Control", "Weather Control", "Gravity Control", "Intangibility", "Self-Duplication", "Memory Manipulation", "Dream Walking", "Astral Projection", "Future Sight", "Heat Vision", "Enhanced Senses", "Luck Manipulation", "Camouflage", "Energy Shielding"],
       fictional_characters: ["Batman", "Sherlock Holmes", "Harry Potter", "Spider-Man", "Yoda", "Superman", "Iron Man", "Wonder Woman", "Hulk", "Thor", "Captain America", "Joker", "Voldemort", "Darth Vader", "Luke Skywalker", "Princess Leia", "Frodo Baggins", "Gandalf", "Legolas", "Gollum", "Katniss Everdeen", "James Bond", "Indiana Jones", "Jack Sparrow", "Mickey Mouse", "Donald Duck", "Bugs Bunny", "SpongeBob", "Patrick Star", "Simba", "Woody", "Buzz Lightyear", "Shrek", "Scooby-Doo", "Pikachu", "Mario", "Link", "Zelda", "Master Chief", "Lara Croft", "Sonic", "Cinderella", "Snow White", "Elsa", "Anna", "Peter Pan", "Alice in Wonderland", "Pinocchio", "Aladdin", "Robin Hood"],
       mythical_creatures: ["Dragon", "Unicorn", "Phoenix", "Mermaid", "Centaur", "Ghost", "Werewolf", "Vampire", "Minotaur", "Griffin", "Sphinx", "Pegasus", "Kraken", "Cyclops", "Hydra", "Medusa", "Zombie", "Goblin", "Elf", "Dwarf", "Troll", "Ogre", "Giant", "Fairy", "Pixie", "Gnome", "Leprechaun", "Banshee", "Yeti", "Bigfoot", "Loch Ness Monster", "Chimera", "Basilisk", "Cerberus", "Harpy", "Siren", "Satyr", "Nymph", "Dryad", "Gargoyle", "Chupacabra", "Manticore", "Kelpie", "Selkie", "Thunderbird", "Kappa", "Kitsune", "Oni", "Tengu", "Djinn"],
-      body_parts: ["Eye", "Hand", "Foot", "Nose", "Ear", "Elbow", "Kidney", "Eyebrow", "Shoulder", "Ankle", "Knuckle", "Knee", "Wrist", "Hip", "Spine", "Heart", "Lungs", "Brain", "Stomach", "Liver", "Intestines", "Bladder", "Tongue", "Teeth", "Lips", "Cheek", "Chin", "Forehead", "Scalp", "Neck", "Throat", "Chest", "Abdomen", "Back", "Waist", "Pelvis", "Thigh", "Calf", "Toe", "Finger", "Thumb", "Nail", "Skin", "Muscle", "Bone", "Joint", "Rib", "Skull", "Jaw", "Arm"],
-      shapes: ["Circle", "Square", "Triangle", "Star", "Heart", "Octagon", "Cylinder", "Pyramid", "Diamond", "Sphere", "Oval", "Rectangle", "Pentagon", "Hexagon", "Heptagon", "Decagon", "Cube", "Cone", "Prism", "Torus", "Parallelogram", "Trapezoid", "Rhombus", "Ellipse", "Crescent", "Arrow", "Cross", "Hexagram", "Octagram", "Semicircle", "Quarter Circle", "Oblong", "Cuboid", "Tetrahedron", "Octahedron", "Dodecahedron", "Icosahedron", "Helix", "Spiral", "Zigzag", "Wave", "Polygon", "Polyhedron", "Right Triangle", "Isosceles", "Equilateral", "Scalene", "Arc", "Sector", "Kite"],
-      flowers: ["Rose", "Tulip", "Daisy", "Sunflower", "Lily", "Orchid", "Lavender", "Daffodil", "Poppy", "Peony", "Iris", "Violet", "Chrysanthemum", "Marigold", "Hydrangea", "Magnolia", "Hibiscus", "Jasmine", "Lotus", "Bluebell", "Carnation", "Geranium", "Begonia", "Petunia", "Pansy", "Dahlia", "Zinnia", "Aster", "Snapdragon", "Foxglove", "Lilac", "Lavender", "Snowdrop", "Crocus", "Anemone", "Buttercup", "Forget-Me-Not", "Morning Glory", "Wisteria", "Gardenia", "Camellia", "Azalea", "Rhododendron", "Cherry Blossom", "Water Lily", "Bougainvillea", "Bird of Paradise", "Protea", "Edelweiss", "Frangipani"],
-      school_subjects: ["Math", "Science", "History", "Art", "Music", "Biology", "Calculus", "Geography", "Physics", "Chemistry", "English", "Literature", "Writing", "Poetry", "Drama", "PE", "Health", "Social Studies", "Economics", "Psychology", "Sociology", "Philosophy", "Religion", "Foreign Language", "Spanish", "French", "German", "Latin", "Greek", "Computer Science", "Coding", "Technology", "Engineering", "Business", "Accounting", "Marketing", "Law", "Criminology", "Political Science", "Civics", "Journalism", "Photography", "Woodshop", "Home Ec", "Astronomy", "Geology", "Oceanography", "Environmental Science", "Calculus", "Statistics"],
-      daily_activities: ["Brushing Teeth", "Cooking", "Exercising", "Gardening", "Reading", "Sleeping", "Eating", "Washing Dishes", "Showering", "Getting Dressed", "Watching TV", "Working", "Studying", "Commuting", "Driving", "Walking", "Running", "Cleaning", "Laundry", "Vacuuming", "Grocery Shopping", "Talking on Phone", "Emailing", "Browsing Internet", "Meditating", "Writing", "Painting", "Singing", "Dancing", "Playing Games", "Listening to Music", "Drinking Water", "Making Bed", "Checking Mail", "Watering Plants", "Feed Pets", "Taking Photos", "Shaving", "Makeup", "Flossing", "Stretching", "Yoga", "Swimming", "Baking", "Knitting", "Sewing", "Recycling", "Volunteering", "Planning", "Thinking"]
-    };
-
-    function showDebugToast(msg) {
-      const t = document.getElementById("toast");
-      t.textContent = msg;
-      t.style.background = "#4caf50";
-      t.classList.add("show");
-      setTimeout(() => t.classList.remove("show"), 3000);
-    }
-
-    function getDynamicWord(catKey) {
-      const list = categories[catKey];
-      if (list && list.length > 0) {
-        return list[Math.floor(Math.random() * list.length)].toUpperCase();
-      }
-      return "ERROR";
-    }
-
-    document.getElementById("joinBtn").onclick = function() {
-      const name = document.getElementById("nameInput").value.trim();
-      if (!name || !currentSeed) return;
-      const ref = db.ref("games/" + currentSeed + "/players");
-      ref.once("value").then(snap => {
-        const players = snap.val() || [];
-        playerIndex = Array.isArray(players) ? players.length : Object.keys(players).length;
-        playerName = name; isHost = (playerIndex === 0);
-        return ref.child(playerIndex).set({ name, color: "#90caf9" });
-      }).then(() => {
-        document.getElementById("joinScreen").style.display = "none";
-        document.getElementById("playersList").style.display = "block";
-      });
-    };
-
-    document.getElementById("chooseCategoryBtn").onclick = function() {
-      const catKey = document.getElementById("categorySelect").value;
-      if(!catKey) return alert("Select a category!");
-      
-      const word = getDynamicWord(catKey);
-      const sessionRef = db.ref("games/" + currentSeed);
-      sessionRef.child("players").once("value").then(snap => {
-        const pCount = Object.keys(snap.val() || {}).length;
-        const imposter = Math.floor(Math.random() * pCount);
-        sessionRef.update({ 
-          category: catKey.replace('_', ' '), 
-          word, 
-          imposter, 
-          showResults: false 
-        });
-      });
-    };
-
-    document.getElementById("newRoundBtn").onclick = () => db.ref("games/" + currentSeed).update({ showResults: true });
-    
-    document.getElementById("exitGameBtn").onclick = () => {
-      if(confirm("End the game and clear the fold?")) {
-        db.ref("games/" + currentSeed).remove().then(() => {
-          db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
-        });
-      }
-    };
-
-    firebase.auth().signInAnonymously().then(() => {
-      db.ref("games/currentRound").on("value", snapshot => {
-        const ns = snapshot.val();
-        if (currentSeed && ns !== currentSeed) { playerName = null; playerIndex = null; isHost = false; }
-        currentSeed = ns;
-        if (currentSeed) { resetGameUI(); attachListeners(currentSeed); }
-        else db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
-      });
-    });
-
-    function resetGameUI() {
-      document.getElementById("joinScreen").style.display = playerName ? "none" : "block";
-      document.getElementById("playersList").style.display = playerName ? "block" : "none";
-      document.getElementById("categorySection").style.display = "none";
-      document.getElementById("revealBtn").style.display = "none";
-      document.getElementById("revealBtn").textContent = "Reveal Secret";
-      document.getElementById("wordBox").style.display = "none";
-      document.getElementById("newRoundBtn").style.display = "none";
-      document.getElementById("exitGameBtn").style.display = "none";
-      document.getElementById("chosenCategory").textContent = "";
-      document.getElementById("waitingCategoryMessage").textContent = (playerName && !isHost) ? "Waiting for the Host to set the fold..." : "";
-      document.getElementById("playersUl").innerHTML = "";
-      document.getElementById("resultOverlay").style.display = "none";
-      
-      const sel = document.getElementById("categorySelect");
-      if (sel.options.length <= 1) {
-        Object.keys(categories).forEach(k => {
-          let o = document.createElement('option'); o.value = k; o.innerHTML = k.replace('_', ' ').toUpperCase();
-          sel.appendChild(o);
-        });
-      }
-    }
-
-    function attachListeners(seed) {
-      const sessionRef = db.ref("games/" + seed);
-      sessionRef.child("players").on("value", snap => {
-        const ul = document.getElementById("playersUl"); ul.innerHTML = "";
-        Object.values(snap.val() || {}).forEach((p, i) => {
-          const li = document.createElement("li");
-          if (p.name === playerName && i === playerIndex) li.className = "local-player";
-          li.innerHTML = `<span class="player-badge" style="background:${p.color}"></span> ${p.name} ${i === 0 ? "👑" : ""}`;
-          ul.appendChild(li);
-        });
-      });
-
-      sessionRef.on("value", snap => {
-        const d = snap.val();
-        if (!snap.exists()) { resetGameUI(); return; }
-
-        if (d.showResults && d.category) {
-          const playersArr = Object.values(d.players || {});
-          const impName = playersArr[d.imposter] ? playersArr[d.imposter].name : "Unknown";
-          document.getElementById("resultText").innerHTML = `The Wolf was: <b style="color:#ffb74d;">${impName}</b><br>Secret Word: <b style="color:#2196f3;">${d.word}</b>`;
-          document.getElementById("resultOverlay").style.display = "flex";
-          document.getElementById("closeResultBtn").onclick = () => {
-            document.getElementById("resultOverlay").style.display = "none";
-            if (isHost) sessionRef.update({ category: null, word: null, imposter: null, showResults: false });
-          };
-        }
-
-        if (!d.category) {
-          document.getElementById("revealBtn").style.display = "none";
-          document.getElementById("revealBtn").textContent = "Reveal Secret";
-          document.getElementById("wordBox").style.display = "none";
-          document.getElementById("chosenCategory").textContent = "";
-          if (playerName && isHost) { document.getElementById("categorySection").style.display = "block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
-          if (playerName && !isHost) document.getElementById("waitingCategoryMessage").textContent = "Waiting for Host...";
-          return;
-        }
-
-        if (d.category && playerName) {
-          document.getElementById("waitingCategoryMessage").textContent = "";
-          document.getElementById("categorySection").style.display = "none";
-          document.getElementById("chosenCategory").textContent = "Category: " + d.category.toUpperCase();
-          document.getElementById("revealBtn").style.display = "inline-block";
-          if (isHost) { document.getElementById("newRoundBtn").style.display = "inline-block"; document.getElementById("exitGameBtn").style.display = "inline-block"; }
-          document.getElementById("revealBtn").onclick = () => {
-            const wb = document.getElementById("wordBox");
-            if (wb.style.display === "none") {
-              wb.innerHTML = (playerIndex == d.imposter) ? "🐺 You are the <b>WOLF</b>" : `🗝️ Secret Word: <b>${d.word}</b>`;
-              wb.style.display = "block";
-              document.getElementById("revealBtn").textContent = "Hide Secret";
-            } else { wb.style.display = "none"; document.getElementById("revealBtn").textContent = "Reveal Secret"; }
-          };
-        }
-      });
-    }
-  </script>
-</body>
-</html>
+      body_parts: ["Eye", "Hand", "Foot", "Nose", "
