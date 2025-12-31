@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Imposter Game</title>
+  <title>🎭 Imposter Game</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -60,7 +60,7 @@
       border: 2px solid #ffb74d; text-align: center; max-width: 80%;
     }
 
-    /* Toast Notification */
+    /* Debug Toast */
     #toast {
       position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
       padding: 12px 24px; border-radius: 30px; color: white; display: none; z-index: 1000;
@@ -115,6 +115,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
+    // 1. Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
       authDomain: "imposter-game-515d8.firebaseapp.com",
@@ -128,82 +129,61 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // 2. Global State
     let playerName = null, playerIndex = null, isHost = false, currentSeed = null;
 
+    // 3. 1,500 Word Curated Database
     const categories = {
-      animals: ["Lion", "Tiger", "Elephant", "Giraffe", "Penguin", "Kangaroo"],
-      colors: ["Crimson", "Turquoise", "Lavender", "Emerald", "Magenta", "Gold"],
-      countries: ["Japan", "Brazil", "Egypt", "Canada", "Italy", "Australia"],
-      kitchen_utensils: ["Whisk", "Spatula", "Grater", "Ladle", "Peeler", "Tongs"],
-      clothing: ["Scarf", "Mittens", "Belt", "Jacket", "Sweater", "Apron"],
-      household_appliances: ["Toaster", "Blender", "Vacuum", "Kettle", "Mixer", "Fridge"],
-      footwear: ["Slipper", "High Heel", "Cleat", "Sandal", "Boot", "Sneaker"],
-      landmarks: ["Eiffel Tower", "Pyramids", "Colosseum", "Big Ben", "Taj Mahal"],
-      weather: ["Blizzard", "Tornado", "Rainbow", "Hurricane", "Thunder", "Fog"],
-      trees: ["Palm", "Pine", "Willow", "Oak", "Maple", "Banyan"],
-      insects: ["Butterfly", "Mosquito", "Grasshopper", "Beetle", "Ladybug", "Moth"],
-      fruits_veg: ["Pineapple", "Broccoli", "Pumpkin", "Garlic", "Coconut", "Corn"],
-      desserts: ["Cheesecake", "Brownie", "Macaron", "Pudding", "Sorbet", "Muffin"],
-      breakfast: ["Omelette", "Waffle", "Bagel", "Pancakes", "Muesli", "Smoothie"],
-      olympic_sports: ["Archery", "Fencing", "Gymnastics", "Karate", "Sailing", "Judo"],
-      musical_instruments: ["Saxophone", "Cello", "Harmonica", "Trumpet", "Harp", "Drums"],
-      art_supplies: ["Canvas", "Charcoal", "Easel", "Pastel", "Palette", "Crayons"],
-      board_games: ["Chess", "Monopoly", "Scrabble", "Dominoes", "Checkers", "Clue"],
-      space: ["Asteroid", "Comet", "Satellite", "Galaxy", "Telescope", "Rocket"],
-      vehicles: ["Helicopter", "Submarine", "Tractor", "Scooter", "Bicycle", "Truck"],
-      car_parts: ["Windshield", "Engine", "Steering Wheel", "Headlight", "Bumper"],
-      occupations: ["Firefighter", "Astronaut", "Librarian", "Farmer", "Baker", "Judge"],
-      superpowers: ["Invisibility", "Teleportation", "Flight", "Strength", "Healing"],
-      fictional_characters: ["Batman", "Sherlock", "Harry Potter", "Spider-Man", "Yoda"],
-      mythical_creatures: ["Dragon", "Unicorn", "Phoenix", "Mermaid", "Centaur", "Ghost"],
-      body_parts: ["Elbow", "Kidney", "Eyebrow", "Shoulder", "Ankle", "Knuckle"],
-      shapes: ["Octagon", "Cylinder", "Pyramid", "Diamond", "Sphere", "Oval"],
-      flowers: ["Sunflower", "Tulip", "Orchid", "Daisy", "Rose", "Lavender"],
-      school_subjects: ["Biology", "Calculus", "Geography", "History", "Physics", "Art"],
-      daily_activities: ["Brushing Teeth", "Cooking", "Exercising", "Gardening", "Reading"]
+      animals: ["Lion", "Tiger", "Elephant", "Giraffe", "Penguin", "Kangaroo", "Panda", "Cheetah", "Hamster", "Crocodile", "Koala", "Octopus", "Zebra", "Gorilla", "Flamingo", "Platypus", "Chameleon", "Hippopotamus", "Squirrel", "Dolphin", "Rhino", "Camel", "Polar Bear", "Wolf", "Rabbit", "Bat", "Eagle", "Shark", "Whale", "Jellyfish", "Frog", "Turtle", "Snake", "Lizard", "Beaver", "Otter", "Seal", "Walrus", "Owl", "Parrot", "Peacock", "Swan", "Deer", "Moose", "Hyena", "Lemur", "Sloth", "Armadillo", "Badger", "Fox"],
+      colors: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange", "Pink", "Brown", "Black", "White", "Gray", "Violet", "Indigo", "Turquoise", "Magenta", "Gold", "Silver", "Bronze", "Peach", "Lavender", "Crimson", "Navy", "Teal", "Beige", "Maroon", "Olive", "Cyan", "Amber", "Coral", "Ivory", "Khaki", "Mauve", "Ochre", "Salmon", "Tan", "Sky Blue", "Lime", "Ruby", "Emerald", "Sapphire", "Ebony", "Azure", "Mint", "Mustard", "Plum", "Rust", "Sepia", "Tangerine", "Vanilla", "Periwinkle"],
+      countries: ["USA", "Japan", "France", "Brazil", "India", "Canada", "Italy", "Australia", "Germany", "Mexico", "China", "Egypt", "Russia", "UK", "Spain", "Greece", "Norway", "Sweden", "Switzerland", "Argentina", "Thailand", "South Korea", "Turkey", "Vietnam", "Netherlands", "South Africa", "Portugal", "Ireland", "New Zealand", "Peru", "Chile", "Colombia", "Belgium", "Austria", "Denmark", "Finland", "Poland", "Ukraine", "Israel", "Saudi Arabia", "Kenya", "Morocco", "Singapore", "Malaysia", "Philippines", "Indonesia", "Iran", "Iraq", "Cuba", "Jamaica"],
+      kitchen_utensils: ["Spoon", "Fork", "Knife", "Whisk", "Spatula", "Grater", "Ladle", "Peeler", "Tongs", "Rolling Pin", "Colander", "Funnel", "Bottle Opener", "Corkscrew", "Measuring Cup", "Sieve", "Cleaver", "Pizza Cutter", "Garlic Press", "Timer", "Scales", "Oven Mitt", "Tray", "Pitcher", "Mug", "Plate", "Bowl", "Teapot", "Coffee Maker", "Kettle", "Saucepan", "Frying Pan", "Wok", "Stock Pot", "Bread Bin", "Can Opener", "Cutting Board", "Trivet", "Ice Tray", "Nutcracker", "Pastry Brush", "Salad Spinner", "Skewer", "Steamer", "Toaster", "Blender", "Hand Mixer", "Griddle", "Waffle Iron", "Egg Slicer"],
+      clothing: ["Shirt", "Pants", "Hat", "Socks", "Jacket", "Scarf", "Mittens", "Belt", "Sweater", "Apron", "Dress", "Skirt", "Tie", "Vest", "Coat", "Raincoat", "Jeans", "Shorts", "Sweatshirt", "Hoodie", "Blazer", "Suit", "Tuxedo", "Gown", "Uniform", "Jersey", "Pyjamas", "Robe", "Swimsuit", "Cloak", "Cape", "Cardigan", "Overalls", "Tights", "Leggings", "Gloves", "Beret", "Beanie", "Bow Tie", "Cufflinks", "Handkerchief", "Polo Shirt", "Tank Top", "Blouse", "Poncho", "Shawl", "Waistcoat", "Trousers", "Kilt", "Kimono"],
+      household_appliances: ["Fridge", "Microwave", "Toaster", "Vacuum", "Washer", "Dryer", "Blender", "Kettle", "Mixer", "Oven", "Stove", "Dishwasher", "Air Conditioner", "Heater", "Fan", "Iron", "Hair Dryer", "Coffee Machine", "Air Fryer", "Dehumidifier", "Purifier", "Humidifier", "Slow Cooker", "Rice Cooker", "Toaster Oven", "Deep Fryer", "Electric Grill", "Food Processor", "Juicer", "Lamp", "Television", "Speaker", "Projector", "Computer", "Router", "Phone", "Tablet", "Doorbell", "Security Camera", "Smoke Detector", "Sewing Machine", "Clock", "Freezer", "Water Dispenser", "Trash Compactor", "Steamer", "Electric Blanket", "Waffle Maker", "Sandwich Press", "Bread Maker"],
+      footwear: ["Sneakers", "Boots", "Sandals", "Slippers", "Heels", "Cleats", "Flats", "Loafers", "Oxford", "Clogs", "Flip Flops", "Moccasins", "Platform", "Wedges", "Espadrilles", "Stilettos", "Ankle Boots", "Rain Boots", "Hiking Boots", "Combat Boots", "Cowboy Boots", "Snow Boots", "Ballet Flats", "Mary Janes", "Brogues", "Derby", "Monk Strap", "Boat Shoes", "Espadrilles", "Slide", "Mules", "Pump", "Chukka", "Chelsea Boot", "Jodhpur", "Galoshes", "Sabatons", "Bowling Shoes", "Golf Shoes", "Track Spikes", "Fins", "Ice Skates", "Roller Skates", "Ski Boots", "Water Shoes", "Espadrilles", "Sandals", "Tennis Shoes", "High Tops", "Plimsolls"],
+      landmarks: ["Eiffel Tower", "Pyramids", "Colosseum", "Big Ben", "Taj Mahal", "Statue of Liberty", "Great Wall", "Machu Picchu", "Stonehenge", "Mount Everest", "Grand Canyon", "Niagara Falls", "Golden Gate Bridge", "Sydney Opera House", "Mount Fuji", "Louvre", "Parthenon", "Leaning Tower", "Christ the Redeemer", "Petra", "Burj Khalifa", "Empire State Building", "White House", "Buckingham Palace", "Mount Rushmore", "Hollywood Sign", "Alcatraz", "Notre Dame", "Versailles", "Sagrada Familia", "Victoria Falls", "Dead Sea", "Great Barrier Reef", "Uluru", "Angkor Wat", "Chichen Itza", "Easter Island", "Galapagos Islands", "Mount Kilimanjaro", "Matterhorn", "Yellowstone", "Loch Ness", "The Vatican", "Tower Bridge", "Acropolis", "Blue Mosque", "Red Square", "Times Square", "Disney World", "Central Park"],
+      weather: ["Rain", "Snow", "Sunny", "Storm", "Windy", "Blizzard", "Tornado", "Rainbow", "Hurricane", "Thunder", "Fog", "Hail", "Sleet", "Drizzle", "Mist", "Cyclone", "Typhoon", "Monsoon", "Frost", "Ice", "Heatwave", "Humidity", "Lightning", "Cloudy", "Overcast", "Gale", "Breeze", "Showers", "Flood", "Drought", "Aurora", "Sandstorm", "Dust Storm", "Freezing Rain", "Squall", "Tempest", "Whirlwind", "Waterspout", "Thunderstorm", "Haze", "Dew", "Black Ice", "Whiteout", "Gust", "Draft", "Downpour", "Sunny Spells", "Smog", "Flash Flood", "Tropical Storm"],
+      trees: ["Oak", "Palm", "Pine", "Maple", "Willow", "Banyan", "Birch", "Cedar", "Cherry", "Cypress", "Elm", "Fir", "Mahogany", "Redwood", "Sequoia", "Spruce", "Teak", "Walnut", "Poplar", "Ash", "Acacia", "Baobab", "Bamboo", "Eucalyptus", "Hickory", "Juniper", "Magnolia", "Olive Tree", "Sycamore", "Yew", "Apple Tree", "Orange Tree", "Lemon Tree", "Peach Tree", "Pear Tree", "Fig Tree", "Mango Tree", "Chestnut", "Beech", "Aspen", "Alder", "Linden", "Dogwood", "Jacaranda", "Joshua Tree", "Ironwood", "Sandalwood", "Holly", "Rubber Tree", "Ebony"],
+      insects: ["Bee", "Ant", "Butterfly", "Spider", "Fly", "Mosquito", "Grasshopper", "Beetle", "Ladybug", "Moth", "Wasp", "Cricket", "Dragonfly", "Cockroach", "Termite", "Scorpion", "Tick", "Flea", "Louse", "Gnat", "Cicada", "Praying Mantis", "Firefly", "Centipede", "Millipede", "Caterpillar", "Hornet", "Bumblebee", "Bedbug", "Stink Bug", "Aphid", "Mayfly", "Silverfish", "Earwig", "Tarantula", "Walking Stick", "June Bug", "Horsefly", "Midge", "Locust", "Fruit Fly", "Yellow Jacket", "Worm", "Slug", "Snail", "Leech", "Earthworm", "Silk Worm", "Woodworm", "Maggot"],
+      fruits_veg: ["Apple", "Banana", "Carrot", "Potato", "Tomato", "Pineapple", "Broccoli", "Pumpkin", "Garlic", "Coconut", "Corn", "Strawberry", "Grape", "Orange", "Lemon", "Lime", "Watermelon", "Mango", "Peach", "Pear", "Cherry", "Blueberry", "Raspberry", "Kiwi", "Avocado", "Cucumber", "Lettuce", "Spinach", "Onion", "Pepper", "Eggplant", "Zucchini", "Cabbage", "Mushroom", "Peas", "Beans", "Asparagus", "Celery", "Radish", "Beetroot", "Artichoke", "Cauliflower", "Kale", "Plum", "Apricot", "Pomegranate", "Papaya", "Fig", "Date", "Melon"],
+      desserts: ["Cake", "Cookie", "Ice Cream", "Pie", "Donut", "Cheesecake", "Brownie", "Macaron", "Pudding", "Sorbet", "Muffin", "Cupcake", "Tart", "Eclair", "Trifle", "Mousse", "Fudge", "Truffle", "Custard", "Gelato", "Sundae", "Milkshake", "Pavlova", "Souffle", "Baklava", "Cannoli", "Churros", "Pancotta", "Tiramisu", "Crepe", "Waffle", "Brittle", "Caramel", "Marshmallow", "Toffee", "Liquorice", "Jelly", "Candy", "Lollipop", "Gumdrop", "Gummy Bear", "Praline", "Sherbet", "Shortbread", "Scone", "Gingerbread", "Fruitcake", "Apple Crumble", "Banoffee Pie", "Profiterole"],
+      breakfast: ["Eggs", "Pancakes", "Toast", "Cereal", "Bacon", "Omelette", "Waffle", "Bagel", "Muesli", "Smoothie", "Sausage", "Ham", "Muffin", "Croissant", "Porridge", "Granola", "French Toast", "Hash Browns", "Baked Beans", "Yogurt", "Fruit Salad", "Hash", "Burrito", "Frittata", "Quiche", "Grits", "Crepes", "Donuts", "Coffee", "Tea", "Orange Juice", "Milk", "Espresso", "Latte", "Cappuccino", "Hot Chocolate", "Benedict", "Steak and Eggs", "Chilaquiles", "Shakshuka", "Lox", "Biscotti", "Scone", "Danish", "English Muffin", "Crumpet", "Bialy", "Pop Tart", "Oatmeal", "Coddled Egg"],
+      olympic_sports: ["Soccer", "Swimming", "Running", "Tennis", "Boxing", "Archery", "Fencing", "Gymnastics", "Karate", "Sailing", "Judo", "Cycling", "Basketball", "Volleyball", "Hockey", "Wrestling", "Rowing", "Canoeing", "Shooting", "Equestrian", "Triathlon", "Badminton", "Golf", "Table Tennis", "Taekwondo", "Weightlifting", "Diving", "Water Polo", "Surfing", "Skateboarding", "Climbing", "Breakdancing", "Modern Pentathlon", "Baseball", "Softball", "Handball", "Rugby", "Bobsleigh", "Skiing", "Snowboarding", "Ice Hockey", "Curling", "Figure Skating", "Speed Skating", "Luge", "Skeleton", "Biathlon", "Trampoline", "High Jump", "Discus"],
+      musical_instruments: ["Piano", "Guitar", "Drums", "Violin", "Flute", "Saxophone", "Cello", "Harmonica", "Trumpet", "Harp", "Clarinet", "Oboe", "Bassoon", "Trombone", "Tuba", "Banjo", "Mandolin", "Ukulele", "Accordion", "Bagpipes", "Xylophone", "Marimba", "Tambourine", "Cymbals", "Triangle", "Organ", "Synthesizer", "Recorder", "Lute", "Lyre", "Zither", "Didgeridoo", "Bongo", "Conga", "Sitar", "Tabla", "Theremin", "Kazoo", "Pan Pipes", "Piccolo", "Viola", "Double Bass", "Electric Guitar", "Bass Guitar", "Harmonium", "Glockenspiel", "Castanets", "Bugle", "Cornet", "Gong"],
+      art_supplies: ["Paint", "Brush", "Pencil", "Paper", "Crayon", "Canvas", "Charcoal", "Easel", "Pastel", "Palette", "Crayons", "Ink", "Pen", "Marker", "Eraser", "Sharpener", "Ruler", "Compass", "Sketchbook", "Watercolor", "Acrylic", "Oil Paint", "Gouache", "Tempera", "Clay", "Pottery Wheel", "Kiln", "Chisel", "Hammer", "Glue", "Tape", "Scissors", "Stencil", "Mannequin", "Spray Paint", "Linocut", "Etching", "Calligraphy Pen", "Glitter", "Sequins", "Beads", "Wire", "Thread", "Needle", "Fabric", "Yarn", "Varnish", "Turpentine", "Fixative", "Drafting Table"],
+      board_games: ["Chess", "Monopoly", "Checkers", "Dice", "Cards", "Scrabble", "Dominoes", "Clue", "Risk", "Life", "Sorry", "Trouble", "Operation", "Battleship", "Connect Four", "Jenga", "Pictionary", "Taboo", "Catan", "Ticket to Ride", "Pandemic", "Carcassonne", "Sushi Go", "Exploding Kittens", "Uno", "Poker", "Blackjack", "Bridge", "Solitaire", "Mahjong", "Go", "Backgammon", "Mancala", "Othello", "Trivial Pursuit", "Codenames", "Secret Hitler", "Werewolf", "Dixit", "Azul", "Terraforming Mars", "Gloomhaven", "Dungeons and Dragons", "Stratego", "Yahtzee", "Boggle", "Twister", "Candy Land", "Chutes and Ladders", "Mouse Trap"],
+      space: ["Moon", "Sun", "Star", "Planet", "Rocket", "Asteroid", "Comet", "Satellite", "Galaxy", "Telescope", "Astronaut", "Orbit", "Gravity", "Black Hole", "Nebula", "Supernova", "Cosmos", "Universe", "Mars", "Jupiter", "Saturn", "Venus", "Mercury", "Uranus", "Neptune", "Pluto", "Alien", "UFO", "Spaceship", "Space Station", "Rover", "Probe", "Shuttle", "Meteor", "Meteorite", "Constellation", "Zodiac", "Solar System", "Milky Way", "Light Year", "Eclipse", "Solstice", "Equinox", "Vacuum", "Zero Gravity", "Big Bang", "Wormhole", "Dark Matter", "Exoplanet", "Launchpad"],
+      vehicles: ["Car", "Bus", "Train", "Plane", "Boat", "Helicopter", "Submarine", "Tractor", "Scooter", "Bicycle", "Truck", "Motorcycle", "Van", "Lorry", "Ambulance", "Fire Truck", "Police Car", "Taxi", "Tram", "Subway", "Cable Car", "Ferry", "Yacht", "Canoe", "Kayak", "Raft", "Ship", "Jet", "Glider", "Hot Air Balloon", "Rocket", "Space Shuttle", "Tank", "Bulldozer", "Forklift", "Crane", "Segway", "Skateboard", "Rollerblades", "Sled", "Sleigh", "Carriage", "Rickshaw", "Unicycle", "Tricycle", "Moped", "Jet Ski", "Snowmobile", "Golf Cart", "Hovercraft"],
+      car_parts: ["Wheel", "Engine", "Door", "Brake", "Mirror", "Windshield", "Steering Wheel", "Headlight", "Bumper", "Hood", "Trunk", "Tire", "Battery", "Radiator", "Alternator", "Spark Plug", "Exhaust", "Muffler", "Fuel Tank", "Transmission", "Clutch", "Gearbox", "Axle", "Suspension", "Shock Absorber", "Dashboard", "Speedometer", "Glove Box", "Seat Belt", "Airbag", "Seat", "Headrest", "Wiper", "Horn", "Antenna", "Sunroof", "Grille", "Fender", "Tail Light", "Indicator", "License Plate", "Gas Pedal", "Brake Pedal", "Handbrake", "Ignition", "Oil Filter", "Air Filter", "Piston", "Cylinder", "Chassis"],
+      occupations: ["Doctor", "Teacher", "Pilot", "Nurse", "Chef", "Firefighter", "Astronaut", "Librarian", "Farmer", "Baker", "Judge", "Lawyer", "Police Officer", "Soldier", "Scientist", "Engineer", "Architect", "Artist", "Musician", "Actor", "Dancer", "Writer", "Journalist", "Photographer", "Dentist", "Vet", "Pharmacist", "Carpenter", "Electrician", "Plumber", "Mechanic", "Pilot", "Sailor", "Barber", "Waiter", "Tailor", "Butcher", "Florist", "Banker", "Accountant", "Programmer", "Graphic Designer", "Athlete", "Coach", "Politician", "Diplomat", "Priest", "Monk", "Psychologist", "Detective"],
+      superpowers: ["Invisibility", "Teleportation", "Flight", "Strength", "Healing", "Telepathy", "Telekinesis", "Shapeshifting", "Time Travel", "Laser Vision", "Force Field", "Pyrokinesis", "Ice Breath", "X-Ray Vision", "Speed", "Agility", "Elasticity", "Size Manipulation", "Magnetism", "Electricity", "Animal Mimicry", "Wall Crawling", "Water Breathing", "Night Vision", "Invulnerability", "Energy Blast", "Mind Control", "Illusions", "Technopathy", "Clairvoyance", "Precognition", "Levitation", "Density Control", "Acid Secretion", "Sonic Scream", "Poison Touch", "Plant Control", "Weather Control", "Gravity Control", "Intangibility", "Self-Duplication", "Memory Manipulation", "Dream Walking", "Astral Projection", "Future Sight", "Heat Vision", "Enhanced Senses", "Luck Manipulation", "Camouflage", "Energy Shielding"],
+      fictional_characters: ["Batman", "Sherlock Holmes", "Harry Potter", "Spider-Man", "Yoda", "Superman", "Iron Man", "Wonder Woman", "Hulk", "Thor", "Captain America", "Joker", "Voldemort", "Darth Vader", "Luke Skywalker", "Princess Leia", "Frodo Baggins", "Gandalf", "Legolas", "Gollum", "Katniss Everdeen", "James Bond", "Indiana Jones", "Jack Sparrow", "Mickey Mouse", "Donald Duck", "Bugs Bunny", "SpongeBob", "Patrick Star", "Simba", "Woody", "Buzz Lightyear", "Shrek", "Scooby-Doo", "Pikachu", "Mario", "Link", "Zelda", "Master Chief", "Lara Croft", "Sonic", "Cinderella", "Snow White", "Elsa", "Anna", "Peter Pan", "Alice in Wonderland", "Pinocchio", "Aladdin", "Robin Hood"],
+      mythical_creatures: ["Dragon", "Unicorn", "Phoenix", "Mermaid", "Centaur", "Ghost", "Werewolf", "Vampire", "Minotaur", "Griffin", "Sphinx", "Pegasus", "Kraken", "Cyclops", "Hydra", "Medusa", "Zombie", "Goblin", "Elf", "Dwarf", "Troll", "Ogre", "Giant", "Fairy", "Pixie", "Gnome", "Leprechaun", "Banshee", "Yeti", "Bigfoot", "Loch Ness Monster", "Chimera", "Basilisk", "Cerberus", "Harpy", "Siren", "Satyr", "Nymph", "Dryad", "Gargoyle", "Chupacabra", "Manticore", "Kelpie", "Selkie", "Thunderbird", "Kappa", "Kitsune", "Oni", "Tengu", "Djinn"],
+      body_parts: ["Eye", "Hand", "Foot", "Nose", "Ear", "Elbow", "Kidney", "Eyebrow", "Shoulder", "Ankle", "Knuckle", "Knee", "Wrist", "Hip", "Spine", "Heart", "Lungs", "Brain", "Stomach", "Liver", "Intestines", "Bladder", "Tongue", "Teeth", "Lips", "Cheek", "Chin", "Forehead", "Scalp", "Neck", "Throat", "Chest", "Abdomen", "Back", "Waist", "Pelvis", "Thigh", "Calf", "Toe", "Finger", "Thumb", "Nail", "Skin", "Muscle", "Bone", "Joint", "Rib", "Skull", "Jaw", "Arm"],
+      shapes: ["Circle", "Square", "Triangle", "Star", "Heart", "Octagon", "Cylinder", "Pyramid", "Diamond", "Sphere", "Oval", "Rectangle", "Pentagon", "Hexagon", "Heptagon", "Decagon", "Cube", "Cone", "Prism", "Torus", "Parallelogram", "Trapezoid", "Rhombus", "Ellipse", "Crescent", "Arrow", "Cross", "Hexagram", "Octagram", "Semicircle", "Quarter Circle", "Oblong", "Cuboid", "Tetrahedron", "Octahedron", "Dodecahedron", "Icosahedron", "Helix", "Spiral", "Zigzag", "Wave", "Polygon", "Polyhedron", "Right Triangle", "Isosceles", "Equilateral", "Scalene", "Arc", "Sector", "Kite"],
+      flowers: ["Rose", "Tulip", "Daisy", "Sunflower", "Lily", "Orchid", "Lavender", "Daffodil", "Poppy", "Peony", "Iris", "Violet", "Chrysanthemum", "Marigold", "Hydrangea", "Magnolia", "Hibiscus", "Jasmine", "Lotus", "Bluebell", "Carnation", "Geranium", "Begonia", "Petunia", "Pansy", "Dahlia", "Zinnia", "Aster", "Snapdragon", "Foxglove", "Lilac", "Lavender", "Snowdrop", "Crocus", "Anemone", "Buttercup", "Forget-Me-Not", "Morning Glory", "Wisteria", "Gardenia", "Camellia", "Azalea", "Rhododendron", "Cherry Blossom", "Water Lily", "Bougainvillea", "Bird of Paradise", "Protea", "Edelweiss", "Frangipani"],
+      school_subjects: ["Math", "Science", "History", "Art", "Music", "Biology", "Calculus", "Geography", "Physics", "Chemistry", "English", "Literature", "Writing", "Poetry", "Drama", "PE", "Health", "Social Studies", "Economics", "Psychology", "Sociology", "Philosophy", "Religion", "Foreign Language", "Spanish", "French", "German", "Latin", "Greek", "Computer Science", "Coding", "Technology", "Engineering", "Business", "Accounting", "Marketing", "Law", "Criminology", "Political Science", "Civics", "Journalism", "Photography", "Woodshop", "Home Ec", "Astronomy", "Geology", "Oceanography", "Environmental Science", "Calculus", "Statistics"],
+      daily_activities: ["Brushing Teeth", "Cooking", "Exercising", "Gardening", "Reading", "Sleeping", "Eating", "Washing Dishes", "Showering", "Getting Dressed", "Watching TV", "Working", "Studying", "Commuting", "Driving", "Walking", "Running", "Cleaning", "Laundry", "Vacuuming", "Grocery Shopping", "Talking on Phone", "Emailing", "Browsing Internet", "Meditating", "Writing", "Painting", "Singing", "Dancing", "Playing Games", "Listening to Music", "Drinking Water", "Making Bed", "Checking Mail", "Watering Plants", "Feed Pets", "Taking Photos", "Shaving", "Makeup", "Flossing", "Stretching", "Yoga", "Swimming", "Baking", "Knitting", "Sewing", "Recycling", "Volunteering", "Planning", "Thinking"]
     };
 
+    // 4. Game Functions
     function showDebugToast(msg, type) {
       const t = document.getElementById("toast");
       t.textContent = msg;
-      t.style.background = type === "api" ? "#2196f3" : "#ff9800";
+      t.style.background = "#4caf50";
       t.classList.add("show");
       setTimeout(() => t.classList.remove("show"), 3000);
     }
 
-async function getDynamicWord(catKey) {
-  const query = catKey.replace('_', ' ');
-  // Avoid words that are too similar to the category name itself
-  const blacklist = [query, 'ware', 'thing', 'stuff', 'object', 'person', 'place'];
-
-  try {
-    // We use 'topics' and 'rel_jjb' to find specific nouns described by the category
-    const res = await fetch(`https://api.datamuse.com/words?topics=${query}&max=40`);
-    const data = await res.json();
-    
-    const filtered = data.filter(w => 
-      !w.word.includes(' ') &&              // No phrases
-      w.word.length > 3 &&                  // No tiny words
-      !blacklist.some(b => w.word.toLowerCase().includes(b)) && // No category names
-      w.score > 1000                        // Only high-confidence matches
-    );
-
-    if (filtered.length > 8) {
-      // We pick from a slightly lower index to avoid the "most obvious" (which are often category synonyms)
-      const randomIndex = Math.floor(Math.random() * 10) + 2; 
-      const word = filtered[Math.min(randomIndex, filtered.length - 1)].word.toUpperCase();
-      
-      showDebugToast(`Source: API (${word})`, "api");
-      return word;
+    function getDynamicWord(catKey) {
+      const list = categories[catKey];
+      if (list && list.length > 0) {
+        const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
+        showDebugToast(`Word Selected: ${word}`);
+        return word;
+      }
+      return "ERROR";
     }
-    throw "niche";
-  } catch (e) {
-    const list = categories[catKey];
-    const word = list[Math.floor(Math.random() * list.length)].toUpperCase();
-    showDebugToast(`Source: Local (${word})`, "local");
-    return word;
-  }
-}
 
     document.getElementById("joinBtn").onclick = function() {
       const name = document.getElementById("nameInput").value.trim();
@@ -220,18 +200,23 @@ async function getDynamicWord(catKey) {
       });
     };
 
-    document.getElementById("chooseCategoryBtn").onclick = async function() {
+    document.getElementById("chooseCategoryBtn").onclick = function() {
       const btn = document.getElementById("chooseCategoryBtn");
       const catKey = document.getElementById("categorySelect").value;
       if(!catKey) return alert("Select a category!");
-      btn.disabled = true; btn.textContent = "Fetching...";
-      const word = await getDynamicWord(catKey);
-      const playersSnap = await db.ref("games/" + currentSeed + "/players").once("value");
-      const pCount = Object.keys(playersSnap.val()).length;
-      const imposter = Math.floor(Math.random() * pCount);
-
-      await db.ref("games/" + currentSeed).update({ category: catKey.replace('_', ' '), word, imposter, showResults: false });
-      btn.disabled = false; btn.textContent = "Pick Word & Start";
+      
+      const word = getDynamicWord(catKey);
+      const sessionRef = db.ref("games/" + currentSeed);
+      sessionRef.child("players").once("value").then(snap => {
+        const pCount = Object.keys(snap.val() || {}).length;
+        const imposter = Math.floor(Math.random() * pCount);
+        sessionRef.update({ 
+          category: catKey.replace('_', ' '), 
+          word, 
+          imposter, 
+          showResults: false 
+        });
+      });
     };
 
     document.getElementById("newRoundBtn").onclick = () => db.ref("games/" + currentSeed).update({ showResults: true });
@@ -259,6 +244,7 @@ async function getDynamicWord(catKey) {
       document.getElementById("playersList").style.display = playerName ? "block" : "none";
       document.getElementById("categorySection").style.display = "none";
       document.getElementById("revealBtn").style.display = "none";
+      document.getElementById("revealBtn").textContent = "Reveal Word";
       document.getElementById("wordBox").style.display = "none";
       document.getElementById("newRoundBtn").style.display = "none";
       document.getElementById("exitGameBtn").style.display = "none";
@@ -292,7 +278,6 @@ async function getDynamicWord(catKey) {
         const d = snap.val();
         if (!snap.exists()) { resetGameUI(); return; }
 
-        // RESULT POPUP LOGIC
         if (d.showResults && d.category) {
           const playersArr = Object.values(d.players || {});
           const impName = playersArr[d.imposter] ? playersArr[d.imposter].name : "Unknown";
