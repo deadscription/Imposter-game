@@ -1,108 +1,198 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>🐺 Wolf in the Fold</title>
   <style>
+    :root {
+      --primary: #ffb74d;
+      --bg: #121212;
+      --card: #1f1f1f;
+      --text: #eeeeee;
+      --green: #4caf50;
+      --blue: #2196f3;
+      --red: #f44336;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #121212;
-      color: #eee;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
       text-align: center;
-      padding: 30px 15px;
-      max-width: 600px;
+      margin: 0;
+      padding: 20px 10px;
+      line-height: 1.4;
+    }
+
+    h1 { 
+      color: var(--primary); 
+      font-size: 1.8rem; 
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Layout Containers */
+    .container {
+      max-width: 450px;
       margin: 0 auto;
     }
-    h1 { color: #ffb74d; }
+
     #playersList {
-      margin: 25px auto;
-      background: #1f1f1f;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      margin: 15px 0;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     }
+
     #playersUl {
       list-style: none;
       padding: 0;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
     }
-    #playersUl li { background: #333; padding: 8px 12px; border-radius: 8px; }
-    .player-badge { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
-    input[type=text], select {
-      padding: 12px; border-radius: 8px; border: none; margin-bottom: 10px;
-      background: #1f1f1f; color: #fff; width: 80%;
-    }
-    button {
-      padding: 12px 24px; font-size: 1em; border: none; border-radius: 8px;
-      cursor: pointer; margin: 5px; transition: opacity 0.3s;
-    }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    #joinBtn { background: #4caf50; color: white; }
-    #revealBtn { background: #2196f3; color: white; }
-    #newRoundBtn { background: #ffb74d; color: #111; font-weight: bold; }
-    #exitGameBtn { background: #f44336; color: white; }
-    #wordBox {
-      margin: 20px auto; padding: 20px; background: #333;
-      border-radius: 10px; border: 2px solid #ffb74d; font-size: 1.4em;
-    }
-    .local-player { border: 1px solid #ffb74d; }
 
+    #playersUl li {
+      background: #333;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .local-player { 
+      border-color: var(--primary) !important;
+      background: #443311 !important;
+    }
+
+    /* Form Elements */
+    input[type=text], select {
+      padding: 15px;
+      border-radius: 12px;
+      border: 2px solid #333;
+      margin-bottom: 15px;
+      background: var(--card);
+      color: #fff;
+      width: 100%;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input:focus, select:focus { border-color: var(--primary); }
+
+    /* Button System */
+    button {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.5; }
+
+    #joinBtn { background: var(--green); color: white; }
+    #revealBtn { background: var(--blue); color: white; margin-top: 10px; }
+    #newRoundBtn { background: var(--primary); color: #111; }
+    #exitGameBtn { background: transparent; color: #888; text-decoration: underline; font-size: 0.9rem; margin-top: 20px; }
+
+    #wordBox {
+      margin: 20px 0;
+      padding: 25px;
+      background: #2a2a2a;
+      border-radius: 16px;
+      border: 2px dashed var(--primary);
+      font-size: 1.5rem;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { border-color: var(--primary); }
+      50% { border-color: #ff8c00; }
+      100% { border-color: var(--primary); }
+    }
+
+    /* Overlays */
     #resultOverlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center;
+      padding: 20px;
     }
     .result-content {
-      background: #1f1f1f; padding: 30px; border-radius: 15px;
-      border: 2px solid #ffb74d; text-align: center; max-width: 80%;
+      background: var(--card); padding: 30px; border-radius: 20px;
+      border: 2px solid var(--primary); width: 100%; max-width: 350px;
     }
 
     #toast {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      padding: 12px 24px; border-radius: 30px; color: white; display: none; z-index: 1000;
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      padding: 12px 24px; border-radius: 30px; background: var(--green);
+      color: white; display: none; z-index: 1000; font-weight: bold;
     }
     #toast.show { display: block; animation: fadeInOut 3s forwards; }
     @keyframes fadeInOut { 0%, 100% { opacity: 0; } 15%, 85% { opacity: 1; } }
+
+    .badge {
+      display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--blue); margin-right: 5px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>🐺 Wolf in the Fold</h1>
+  <div class="container">
+    <h1>🐺 Wolf in the Fold</h1>
 
-  <div id="joinScreen">
-    <input id="nameInput" type="text" placeholder="Enter your name..." />
-    <button id="joinBtn">Join Game</button>
-  </div>
+    <div id="joinScreen">
+      <input id="nameInput" type="text" placeholder="Your Name" autocomplete="off" />
+      <button id="joinBtn">Join the Pack</button>
+    </div>
 
-  <div id="playersList" style="display:none;">
-    <h3>🧑‍🤝‍🧑 The Pack</h3>
-    <ul id="playersUl"></ul>
-  </div>
+    <div id="playersList" style="display:none;">
+      <h3 style="margin-top:0; font-size: 1rem; color: #888;">THE PACK</h3>
+      <ul id="playersUl"></ul>
+    </div>
 
-  <div id="categorySection" style="display:none;">
-    <h3>🎯 Select a Category</h3>
-    <select id="categorySelect"><option value="">-- Choose Category --</option></select>
-    <br>
-    <button id="chooseCategoryBtn" style="background:#ffb74d;">Pick Word & Start</button>
-  </div>
+    <div id="categorySection" style="display:none;">
+      <h3 style="margin-bottom:10px;">Set the Fold</h3>
+      <select id="categorySelect">
+        <option value="">-- Choose Category --</option>
+      </select>
+      <button id="chooseCategoryBtn" style="background:var(--primary); color:#111;">Start Round</button>
+    </div>
 
-  <div id="gameUI">
-    <div id="waitingCategoryMessage" style="color:#aaa; margin: 20px;"></div>
-    <div id="chosenCategory" style="font-size: 1.2em; color: #ffb74d; margin-bottom: 10px;"></div>
-    <button id="revealBtn" style="display:none;">Reveal Word</button>
-    <div id="wordBox" style="display:none;"></div>
-    <br>
-    <button id="newRoundBtn" style="display:none;">Start New Round</button>
-    <button id="exitGameBtn" style="display:none;">Exit Game</button>
+    <div id="gameUI">
+      <div id="waitingCategoryMessage" style="color:#888; margin: 20px 0; font-style: italic;"></div>
+      
+      <div id="gameActiveArea" style="display:none;">
+        <div id="chosenCategory" style="font-size: 1.1rem; color: var(--primary); font-weight: bold;"></div>
+        <button id="revealBtn">Reveal Word</button>
+        <div id="wordBox" style="display:none;"></div>
+      </div>
+
+      <div id="hostControls" style="margin-top: 30px;">
+        <button id="newRoundBtn" style="display:none;">Next Round</button>
+        <button id="exitGameBtn" style="display:none;">End Session</button>
+      </div>
+    </div>
   </div>
 
   <div id="resultOverlay">
     <div class="result-content">
-      <h2 style="color:#ffb74d;">🏁 Round Results</h2>
-      <p id="resultText" style="font-size:1.2em; margin:20px 0; color:#eee;"></p>
-      <button id="closeResultBtn" style="background:#4caf50; color:white; width:100%;">Continue</button>
+      <h2 style="color:var(--primary); margin-top:0;">🏁 Results</h2>
+      <p id="resultText" style="font-size:1.2rem; margin:20px 0;"></p>
+      <button id="closeResultBtn" style="background:var(--green); color:white;">Continue</button>
     </div>
   </div>
 
@@ -113,6 +203,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
   <script>
+    // 1. Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyDvpa6IP-gjyVVg_lFizwMNjflqbJMw2uQ",
       authDomain: "imposter-game-515d8.firebaseapp.com",
@@ -126,6 +217,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // 2. State & Data
     let playerName = null, playerIndex = null, isHost = false, currentSeed = null;
 
     const categories = {
@@ -154,4 +246,146 @@
       superpowers: ["Invisibility", "Teleportation", "Flight", "Strength", "Healing", "Telepathy", "Telekinesis", "Shapeshifting", "Time Travel", "Laser Vision", "Force Field", "Pyrokinesis", "Ice Breath", "X-Ray Vision", "Speed", "Agility", "Elasticity", "Size Manipulation", "Magnetism", "Electricity", "Animal Mimicry", "Wall Crawling", "Water Breathing", "Night Vision", "Invulnerability", "Energy Blast", "Mind Control", "Illusions", "Technopathy", "Clairvoyance", "Precognition", "Levitation", "Density Control", "Acid Secretion", "Sonic Scream", "Poison Touch", "Plant Control", "Weather Control", "Gravity Control", "Intangibility", "Self-Duplication", "Memory Manipulation", "Dream Walking", "Astral Projection", "Future Sight", "Heat Vision", "Enhanced Senses", "Luck Manipulation", "Camouflage", "Energy Shielding"],
       fictional_characters: ["Batman", "Sherlock Holmes", "Harry Potter", "Spider-Man", "Yoda", "Superman", "Iron Man", "Wonder Woman", "Hulk", "Thor", "Captain America", "Joker", "Voldemort", "Darth Vader", "Luke Skywalker", "Princess Leia", "Frodo Baggins", "Gandalf", "Legolas", "Gollum", "Katniss Everdeen", "James Bond", "Indiana Jones", "Jack Sparrow", "Mickey Mouse", "Donald Duck", "Bugs Bunny", "SpongeBob", "Patrick Star", "Simba", "Woody", "Buzz Lightyear", "Shrek", "Scooby-Doo", "Pikachu", "Mario", "Link", "Zelda", "Master Chief", "Lara Croft", "Sonic", "Cinderella", "Snow White", "Elsa", "Anna", "Peter Pan", "Alice in Wonderland", "Pinocchio", "Aladdin", "Robin Hood"],
       mythical_creatures: ["Dragon", "Unicorn", "Phoenix", "Mermaid", "Centaur", "Ghost", "Werewolf", "Vampire", "Minotaur", "Griffin", "Sphinx", "Pegasus", "Kraken", "Cyclops", "Hydra", "Medusa", "Zombie", "Goblin", "Elf", "Dwarf", "Troll", "Ogre", "Giant", "Fairy", "Pixie", "Gnome", "Leprechaun", "Banshee", "Yeti", "Bigfoot", "Loch Ness Monster", "Chimera", "Basilisk", "Cerberus", "Harpy", "Siren", "Satyr", "Nymph", "Dryad", "Gargoyle", "Chupacabra", "Manticore", "Kelpie", "Selkie", "Thunderbird", "Kappa", "Kitsune", "Oni", "Tengu", "Djinn"],
-      body_parts: ["Eye", "Hand", "Foot", "Nose", "
+      body_parts: ["Eye", "Hand", "Foot", "Nose", "Ear", "Elbow", "Kidney", "Eyebrow", "Shoulder", "Ankle", "Knuckle", "Knee", "Wrist", "Hip", "Spine", "Heart", "Lungs", "Brain", "Stomach", "Liver", "Intestines", "Bladder", "Tongue", "Teeth", "Lips", "Cheek", "Chin", "Forehead", "Scalp", "Neck", "Throat", "Chest", "Abdomen", "Back", "Waist", "Pelvis", "Thigh", "Calf", "Toe", "Finger", "Thumb", "Nail", "Skin", "Muscle", "Bone", "Joint", "Rib", "Skull", "Jaw", "Arm"],
+      shapes: ["Circle", "Square", "Triangle", "Star", "Heart", "Octagon", "Cylinder", "Pyramid", "Diamond", "Sphere", "Oval", "Rectangle", "Pentagon", "Hexagon", "Heptagon", "Decagon", "Cube", "Cone", "Prism", "Torus", "Parallelogram", "Trapezoid", "Rhombus", "Ellipse", "Crescent", "Arrow", "Cross", "Hexagram", "Octagram", "Semicircle", "Quarter Circle", "Oblong", "Cuboid", "Tetrahedron", "Octahedron", "Dodecahedron", "Icosahedron", "Helix", "Spiral", "Zigzag", "Wave", "Polygon", "Polyhedron", "Right Triangle", "Isosceles", "Equilateral", "Scalene", "Arc", "Sector", "Kite"],
+      flowers: ["Rose", "Tulip", "Daisy", "Sunflower", "Lily", "Orchid", "Lavender", "Daffodil", "Poppy", "Peony", "Iris", "Violet", "Chrysanthemum", "Marigold", "Hydrangea", "Magnolia", "Hibiscus", "Jasmine", "Lotus", "Bluebell", "Carnation", "Geranium", "Begonia", "Petunia", "Pansy", "Dahlia", "Zinnia", "Aster", "Snapdragon", "Foxglove", "Lilac", "Lavender", "Snowdrop", "Crocus", "Anemone", "Buttercup", "Forget-Me-Not", "Morning Glory", "Wisteria", "Gardenia", "Camellia", "Azalea", "Rhododendron", "Cherry Blossom", "Water Lily", "Bougainvillea", "Bird of Paradise", "Protea", "Edelweiss", "Frangipani"],
+      school_subjects: ["Math", "Science", "History", "Art", "Music", "Biology", "Calculus", "Geography", "Physics", "Chemistry", "English", "Literature", "Writing", "Poetry", "Drama", "PE", "Health", "Social Studies", "Economics", "Psychology", "Sociology", "Philosophy", "Religion", "Foreign Language", "Spanish", "French", "German", "Latin", "Greek", "Computer Science", "Coding", "Technology", "Engineering", "Business", "Accounting", "Marketing", "Law", "Criminology", "Political Science", "Civics", "Journalism", "Photography", "Woodshop", "Home Ec", "Astronomy", "Geology", "Oceanography", "Environmental Science", "Calculus", "Statistics"],
+      daily_activities: ["Brushing Teeth", "Cooking", "Exercising", "Gardening", "Reading", "Sleeping", "Eating", "Washing Dishes", "Showering", "Getting Dressed", "Watching TV", "Working", "Studying", "Commuting", "Driving", "Walking", "Running", "Cleaning", "Laundry", "Vacuuming", "Grocery Shopping", "Talking on Phone", "Emailing", "Browsing Internet", "Meditating", "Writing", "Painting", "Singing", "Dancing", "Playing Games", "Listening to Music", "Drinking Water", "Making Bed", "Checking Mail", "Watering Plants", "Feed Pets", "Taking Photos", "Shaving", "Makeup", "Flossing", "Stretching", "Yoga", "Swimming", "Baking", "Knitting", "Sewing", "Recycling", "Volunteering", "Planning", "Thinking"]
+    };
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 3000);
+    }
+
+    function getWord(catKey) {
+      const list = categories[catKey];
+      return list ? list[Math.floor(Math.random() * list.length)].toUpperCase() : "ERROR";
+    }
+
+    // 3. Button Logic
+    document.getElementById("joinBtn").onclick = () => {
+      const name = document.getElementById("nameInput").value.trim();
+      if (!name || !currentSeed) return;
+      const ref = db.ref(`games/${currentSeed}/players`);
+      ref.once("value").then(snap => {
+        const p = snap.val() || [];
+        playerIndex = Array.isArray(p) ? p.length : Object.keys(p).length;
+        playerName = name; isHost = (playerIndex === 0);
+        return ref.child(playerIndex).set({ name, color: "#90caf9" });
+      }).then(() => {
+        document.getElementById("joinScreen").style.display = "none";
+        document.getElementById("playersList").style.display = "block";
+      });
+    };
+
+    document.getElementById("chooseCategoryBtn").onclick = () => {
+      const catKey = document.getElementById("categorySelect").value;
+      if(!catKey) return alert("Pick a category!");
+      const word = getWord(catKey);
+      const sessionRef = db.ref(`games/${currentSeed}`);
+      sessionRef.child("players").once("value").then(snap => {
+        const imposter = Math.floor(Math.random() * Object.keys(snap.val()).length);
+        sessionRef.update({ category: catKey.replace('_', ' '), word, imposter, showResults: false });
+      });
+    };
+
+    document.getElementById("newRoundBtn").onclick = () => db.ref(`games/${currentSeed}`).update({ showResults: true });
+    document.getElementById("exitGameBtn").onclick = () => {
+      if(confirm("End game?")) db.ref(`games/${currentSeed}`).remove().then(() => db.ref("games/currentRound").set(Math.floor(Math.random() * 999999)));
+    };
+
+    // 4. Engine
+    firebase.auth().signInAnonymously().then(() => {
+      db.ref("games/currentRound").on("value", snapshot => {
+        const ns = snapshot.val();
+        if (currentSeed && ns !== currentSeed) { playerName = null; playerIndex = null; isHost = false; }
+        currentSeed = ns;
+        if (currentSeed) { resetGameUI(); attachListeners(currentSeed); }
+        else db.ref("games/currentRound").set(Math.floor(Math.random() * 999999));
+      });
+    });
+
+    function resetGameUI() {
+      document.getElementById("joinScreen").style.display = playerName ? "none" : "block";
+      document.getElementById("playersList").style.display = playerName ? "block" : "none";
+      document.getElementById("categorySection").style.display = "none";
+      document.getElementById("gameActiveArea").style.display = "none";
+      document.getElementById("wordBox").style.display = "none";
+      document.getElementById("revealBtn").textContent = "Reveal Word";
+      document.getElementById("newRoundBtn").style.display = "none";
+      document.getElementById("exitGameBtn").style.display = "none";
+      document.getElementById("resultOverlay").style.display = "none";
+      document.getElementById("waitingCategoryMessage").textContent = (playerName && !isHost) ? "Waiting for the Host..." : "";
+      
+      const sel = document.getElementById("categorySelect");
+      if (sel.options.length <= 1) {
+        Object.keys(categories).forEach(k => {
+          let o = document.createElement('option'); o.value = k; o.innerHTML = k.replace('_', ' ').toUpperCase();
+          sel.appendChild(o);
+        });
+      }
+    }
+
+    function attachListeners(seed) {
+      const sessionRef = db.ref(`games/${seed}`);
+      sessionRef.child("players").on("value", snap => {
+        const ul = document.getElementById("playersUl"); ul.innerHTML = "";
+        Object.values(snap.val() || {}).forEach((p, i) => {
+          const li = document.createElement("li");
+          if (p.name === playerName && i === playerIndex) li.className = "local-player";
+          li.innerHTML = `<span class="badge"></span> ${p.name} ${i === 0 ? "👑" : ""}`;
+          ul.appendChild(li);
+        });
+      });
+
+      sessionRef.on("value", snap => {
+        const d = snap.val();
+        if (!snap || !snap.exists()) { resetGameUI(); return; }
+
+        if (d.showResults && d.category) {
+          const p = Object.values(d.players || {});
+          const impName = p[d.imposter] ? p[d.imposter].name : "???";
+          document.getElementById("resultText").innerHTML = `The Wolf was: <b style="color:var(--primary)">${impName}</b><br>Word: <b style="color:var(--blue)">${d.word}</b>`;
+          document.getElementById("resultOverlay").style.display = "flex";
+          document.getElementById("closeResultBtn").onclick = () => {
+            document.getElementById("resultOverlay").style.display = "none";
+            if (isHost) sessionRef.update({ category: null, word: null, imposter: null, showResults: false });
+          };
+        }
+
+        if (!d.category) {
+          document.getElementById("gameActiveArea").style.display = "none";
+          if (playerName && isHost) {
+            document.getElementById("categorySection").style.display = "block";
+            document.getElementById("exitGameBtn").style.display = "block";
+          }
+          return;
+        }
+
+        if (d.category && playerName) {
+          document.getElementById("waitingCategoryMessage").textContent = "";
+          document.getElementById("categorySection").style.display = "none";
+          document.getElementById("gameActiveArea").style.display = "block";
+          document.getElementById("chosenCategory").textContent = "CATEGORY: " + d.category.toUpperCase();
+          if (isHost) {
+            document.getElementById("newRoundBtn").style.display = "block";
+            document.getElementById("exitGameBtn").style.display = "block";
+          }
+
+          document.getElementById("revealBtn").onclick = () => {
+            const wb = document.getElementById("wordBox");
+            if (wb.style.display === "none") {
+              wb.innerHTML = (playerIndex == d.imposter) ? "🐺 You are the <b>WOLF</b>" : `Word: <b>${d.word}</b>`;
+              wb.style.display = "block";
+              document.getElementById("revealBtn").textContent = "Hide Word";
+            } else { wb.style.display = "none"; document.getElementById("revealBtn").textContent = "Reveal Word"; }
+          };
+        }
+      });
+    }
+  </script>
+</body>
+</html>
